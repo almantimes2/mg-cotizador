@@ -195,6 +195,22 @@
     transition:.3s;z-index:200;pointer-events:none}
   #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
+  /* pantalla de bloqueo (clave de acceso) */
+  #lockScreen{position:fixed;inset:0;z-index:400;display:none;align-items:center;justify-content:center;padding:20px;
+    background:rgba(4,6,10,.72);-webkit-backdrop-filter:blur(34px) saturate(1.4);backdrop-filter:blur(34px) saturate(1.4)}
+  #lockScreen.show{display:flex}
+  .lock-card{width:min(370px,92vw);text-align:center;padding:36px 30px;
+    background:linear-gradient(165deg,rgba(255,255,255,.09),rgba(255,255,255,.03));
+    border:1px solid var(--vidrio-borde);border-radius:26px;box-shadow:var(--shadow),var(--hl)}
+  .lock-card .mark{width:64px;height:64px;margin:0 auto 16px;border-radius:18px;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));display:grid;place-items:center;
+    box-shadow:0 14px 34px -10px rgba(39,194,214,.7),var(--hl)}
+  .lock-card h3{font-size:1.3rem;margin-bottom:6px}
+  .lock-card p{font-size:.88rem;color:var(--dim)}
+  .lock-card input{text-align:center;font-size:1.35rem;letter-spacing:.4em;margin-top:14px;font-weight:700}
+  .lock-msg{min-height:22px;font-size:.85rem;color:#ff8f8f;margin-top:10px;font-weight:600}
+  .lock-card .btn{width:100%;margin-top:6px}
+
   /* modal impresión */
   #printModal{position:fixed;inset:0;background:rgba(0,0,0,.72);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);z-index:150;display:none;
     align-items:flex-start;justify-content:center;padding:24px;overflow:auto}
@@ -455,6 +471,20 @@
       <div class="btn-row"><button class="btn btn-primary" onclick="saveSettings()">Guardar datos</button></div>
     </div>
     <div class="card">
+      <h2>Clave de acceso</h2>
+      <div class="sub">La app pide esta clave cada vez que se abre, para que solo tú puedas entrar. Es independiente en cada aparato (ponla también en tu teléfono).</div>
+      <div class="grid g3">
+        <div class="field"><label>Clave actual</label><input id="p_actual" type="password" inputmode="numeric" maxlength="8" autocomplete="off"></div>
+        <div class="field"><label>Clave nueva (4 a 8 números)</label><input id="p_nueva" type="password" inputmode="numeric" maxlength="8" autocomplete="off"></div>
+        <div class="field"><label>Repetir clave nueva</label><input id="p_nueva2" type="password" inputmode="numeric" maxlength="8" autocomplete="off"></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="changePin()">Cambiar clave</button>
+        <button class="btn btn-danger btn-sm" onclick="removePin()">Quitar la clave</button>
+      </div>
+      <div class="hint" style="margin-top:10px">Si algún día la olvidas, dímelo y te ayudo a recuperar el acceso desde la laptop sin perder tus datos.</div>
+    </div>
+    <div class="card">
       <h2>Compartir datos entre dispositivos</h2>
       <div class="sub">Pasa tu información al celular u otra computadora. Al recibir, los datos se <strong>combinan</strong> (se agregan y actualizan) — no se borra lo que ya tengas en ese aparato.</div>
       <div class="btn-row">
@@ -480,6 +510,19 @@
   </section>
 
 </main>
+
+<!-- Pantalla de bloqueo con clave -->
+<div id="lockScreen">
+  <div class="lock-card">
+    <div class="mark"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#04141a" stroke-width="2.2" stroke-linecap="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>
+    <h3 id="lock-title">MG Cotizador</h3>
+    <p id="lock-sub">Escribe tu clave para entrar</p>
+    <input id="lock_pin" type="password" inputmode="numeric" maxlength="8" autocomplete="off" placeholder="••••">
+    <input id="lock_pin2" type="password" inputmode="numeric" maxlength="8" autocomplete="off" placeholder="Repite la clave" style="display:none">
+    <div class="lock-msg" id="lock-msg"></div>
+    <button class="btn btn-primary" id="lock-btn" onclick="lockSubmit()">Entrar</button>
+  </div>
+</div>
 
 <div id="toast"></div>
 
@@ -1240,12 +1283,97 @@ function renderPanelReminders(){
 }
 
 /* ============================================================
+   CLAVE DE ACCESO (bloqueo de la app)
+   La clave NO se guarda tal cual: se guarda su "huella" (hash con sal),
+   distinta en cada aparato. No viaja en respaldos ni al compartir datos.
+   ============================================================ */
+const PIN_KEY='mgcot_pin';
+function pinData(){ try{ return JSON.parse(localStorage.getItem(PIN_KEY)||'null'); }catch(e){ return null; } }
+async function hashPin(pin,salt){
+  const texto=salt+':'+pin;
+  if(window.crypto && crypto.subtle){
+    try{
+      const d=await crypto.subtle.digest('SHA-256', new TextEncoder().encode(texto));
+      return [...new Uint8Array(d)].map(b=>b.toString(16).padStart(2,'0')).join('');
+    }catch(e){}
+  }
+  let h=5381; for(let i=0;i<texto.length;i++){ h=((h<<5)+h+texto.charCodeAt(i))>>>0; }
+  return 'x'+h.toString(16);
+}
+let lockMode='enter', lockIntentos=0;
+function showLock(mode){
+  lockMode=mode;
+  $('#lock_pin').value=''; $('#lock_pin2').value=''; $('#lock-msg').textContent='';
+  $('#lock_pin2').style.display = mode==='setup'?'block':'none';
+  $('#lock-title').textContent = mode==='setup'?'Crea tu clave':'MG Cotizador';
+  $('#lock-sub').textContent = mode==='setup'
+    ? 'Elige una clave de 4 a 8 números. Se pedirá cada vez que abras la app en este aparato.'
+    : 'Escribe tu clave para entrar';
+  $('#lock-btn').textContent = mode==='setup'?'Guardar clave':'Entrar';
+  $('#lockScreen').classList.add('show');
+  setTimeout(()=>$('#lock_pin').focus(),80);
+}
+function hideLock(){ $('#lockScreen').classList.remove('show'); }
+async function lockSubmit(){
+  const pin=$('#lock_pin').value.trim();
+  if(lockMode==='setup'){
+    if(!/^\d{4,8}$/.test(pin)){ $('#lock-msg').textContent='La clave debe ser de 4 a 8 números'; return; }
+    if(pin!==$('#lock_pin2').value.trim()){ $('#lock-msg').textContent='Las claves no coinciden'; return; }
+    const salt=uid();
+    localStorage.setItem(PIN_KEY, JSON.stringify({salt, hash: await hashPin(pin,salt)}));
+    sessionStorage.setItem('mgcot_unlocked','1');
+    hideLock(); toast('Clave guardada ✓ La app la pedirá al abrir.');
+  }else{
+    const pd=pinData();
+    if(!pd){ hideLock(); return; }
+    if(await hashPin(pin,pd.salt)===pd.hash){
+      lockIntentos=0; sessionStorage.setItem('mgcot_unlocked','1'); hideLock();
+    }else{
+      lockIntentos++;
+      $('#lock-msg').textContent='Clave incorrecta'+(lockIntentos>=3?' ('+lockIntentos+' intentos)':'');
+      $('#lock_pin').value=''; $('#lock_pin').focus();
+    }
+  }
+}
+['lock_pin','lock_pin2'].forEach(id=>{
+  document.getElementById(id).addEventListener('keydown',e=>{ if(e.key==='Enter') lockSubmit(); });
+});
+async function changePin(){
+  const pd=pinData();
+  const actual=$('#p_actual').value.trim(), nueva=$('#p_nueva').value.trim(), nueva2=$('#p_nueva2').value.trim();
+  if(pd && (await hashPin(actual,pd.salt))!==pd.hash){ toast('La clave actual no es correcta'); return; }
+  if(!/^\d{4,8}$/.test(nueva)){ toast('La clave nueva debe ser de 4 a 8 números'); return; }
+  if(nueva!==nueva2){ toast('Las claves nuevas no coinciden'); return; }
+  const salt=uid();
+  localStorage.setItem(PIN_KEY, JSON.stringify({salt, hash: await hashPin(nueva,salt)}));
+  $('#p_actual').value=''; $('#p_nueva').value=''; $('#p_nueva2').value='';
+  toast('Clave cambiada ✓');
+}
+async function removePin(){
+  const pd=pinData();
+  if(!pd){ toast('No hay clave puesta'); return; }
+  const actual=$('#p_actual').value.trim();
+  if((await hashPin(actual,pd.salt))!==pd.hash){ toast('Escribe tu clave actual para quitarla'); return; }
+  if(confirm('¿Quitar la clave? La app abrirá sin pedir nada.')){
+    localStorage.removeItem(PIN_KEY); $('#p_actual').value='';
+    toast('Clave quitada');
+  }
+}
+
+/* ============================================================
    INICIO
    ============================================================ */
 loadSettings();
 populateClientes();
 resetForm();
 renderPanel();
+
+// Bloqueo: si no hay clave, pedir crearla; si hay, pedirla (una vez por sesión)
+(function initLock(){
+  const pd=pinData();
+  if(!pd) showLock('setup');
+  else if(sessionStorage.getItem('mgcot_unlocked')!=='1') showLock('enter');
+})();
 
 /* Registrar el service worker (solo funciona servido por https/GitHub Pages; en file:// se ignora sin error) */
 if('serviceWorker' in navigator && location.protocol.startsWith('http')){
