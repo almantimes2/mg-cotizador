@@ -125,7 +125,7 @@
   .totrow .val{font-weight:700}
 
   /* dashboard */
-  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
   @media(max-width:820px){.stats{grid-template-columns:1fr 1fr}}
   .stat{background:linear-gradient(165deg,rgba(255,255,255,.08),rgba(255,255,255,.03));
     -webkit-backdrop-filter:blur(20px) saturate(1.6);backdrop-filter:blur(20px) saturate(1.6);
@@ -151,10 +151,12 @@
   .barchart{display:flex;align-items:stretch;gap:6px;height:210px;padding-top:6px}
   .bar-col{flex:1;display:flex;flex-direction:column;align-items:center;min-width:0}
   .bar-val{font-size:.68rem;color:var(--dim);height:16px;line-height:16px;white-space:nowrap;font-variant-numeric:tabular-nums}
-  .bar-track{flex:1;width:100%;display:flex;align-items:flex-end;justify-content:center}
-  .bar{width:62%;max-width:34px;border-radius:8px 8px 3px 3px;
+  .bar-track{flex:1;width:100%;display:flex;align-items:flex-end;justify-content:center;gap:2px}
+  .bar{width:40%;max-width:22px;border-radius:8px 8px 3px 3px;
     background:linear-gradient(180deg,var(--accent),var(--accent2));
     box-shadow:var(--hl),0 8px 18px -8px rgba(39,194,214,.6);transition:height .4s ease}
+  .bar.g{background:linear-gradient(180deg,#f3b76b,#d97a1c);box-shadow:var(--hl),0 8px 18px -8px rgba(232,155,60,.5)}
+  .dot-leg{display:inline-block;width:10px;height:10px;border-radius:3px;vertical-align:-1px}
   .bar-lbl{font-size:.72rem;color:var(--dim);margin-top:8px}
   .bar-col:hover .bar{filter:brightness(1.18)}
   .year-nav{display:flex;align-items:center;gap:8px}
@@ -194,6 +196,56 @@
     padding:13px 22px;border-radius:14px;font-weight:600;box-shadow:0 18px 40px -12px rgba(0,0,0,.7),var(--hl);opacity:0;
     transition:.3s;z-index:200;pointer-events:none}
   #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  /* modal de pagos (anticipos y saldo) */
+  #payModal{position:fixed;inset:0;z-index:160;display:none;align-items:center;justify-content:center;padding:20px;
+    background:rgba(4,6,10,.7);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+  #payModal.show{display:flex}
+  .pay-card{width:min(480px,94vw);max-height:88vh;overflow:auto;padding:24px;
+    background:linear-gradient(165deg,rgba(30,38,48,.97),rgba(16,22,30,.97));
+    border:1px solid var(--vidrio-borde);border-radius:22px;box-shadow:var(--shadow),var(--hl)}
+  .pay-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.08);font-size:.93rem}
+  .pay-add{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end;margin-top:14px}
+  @media(max-width:520px){.pay-add{grid-template-columns:1fr 1fr}}
+
+  /* agenda (calendario mensual) */
+  .cal-head{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:6px}
+  .cal-head div{text-align:center;font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;color:var(--dim);font-weight:700}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+  .cal-cell{min-height:64px;border-radius:12px;padding:6px 7px;cursor:pointer;border:1px solid rgba(255,255,255,.08);
+    background:rgba(255,255,255,.035);transition:.15s;position:relative}
+  .cal-cell:hover{background:rgba(255,255,255,.09)}
+  .cal-cell.out{opacity:.28;cursor:default}
+  .cal-cell.today{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+  .cal-cell.sel{background:rgba(58,217,236,.16);border-color:var(--accent)}
+  .cal-num{font-size:.8rem;font-weight:700;color:var(--dim)}
+  .cal-cell.today .cal-num{color:var(--accent)}
+  .cal-dots{display:flex;gap:3px;flex-wrap:wrap;margin-top:5px}
+  .cal-dot{width:8px;height:8px;border-radius:50%}
+  .cal-dot.trabajo{background:#5fe0f0}
+  .cal-dot.rec{background:#f3b76b}
+  @media(max-width:600px){.cal-cell{min-height:48px;padding:4px 5px}}
+
+  /* ---------- MÓVIL: más cómodo y más rápido ---------- */
+  @media(max-width:720px){
+    /* menú deslizable tipo app (una línea, se desliza con el dedo) */
+    nav{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:2px}
+    nav::-webkit-scrollbar{display:none}
+    nav button{flex-shrink:0;padding:10px 14px}
+    .topbar{padding:10px 12px}
+    .logo{font-size:1.12rem}
+    /* botones y campos más grandes para el pulgar */
+    .btn{padding:13px 20px}
+    .icon-btn{width:42px;height:42px}
+    input,select,textarea{padding:12px 13px}
+    .card{padding:16px;border-radius:18px}
+    main{padding-bottom:110px}
+    /* rendimiento: menos desenfoque y sin animación de fondo en el teléfono */
+    body::before{filter:blur(26px) saturate(1.1);animation:none}
+    .card,.stat,.topbar{-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+    .barchart{height:170px}
+    .bar-val{font-size:.58rem}
+  }
 
   /* pantalla de bloqueo (clave de acceso) */
   #lockScreen{position:fixed;inset:0;z-index:400;display:none;align-items:center;justify-content:center;padding:20px;
@@ -268,6 +320,8 @@
         <button data-view="panel" class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>Panel</button>
         <button data-view="cotizar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Nueva cotización</button>
         <button data-view="historial"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l3 3"/></svg>Historial</button>
+        <button data-view="agenda"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Agenda</button>
+        <button data-view="gastos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 7h20v14H2zM16 3l-4 4-4-4"/><path d="M12 12v5M9.5 13.5h5"/></svg>Gastos</button>
         <button data-view="calculadora"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 6h8M8 10h2M8 14h2M8 18h2M14 10h2v8h-2z"/></svg>Calculadora</button>
         <button data-view="recordatorios"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"/></svg>Recordatorios</button>
         <button data-view="catalogo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Catálogo</button>
@@ -337,9 +391,10 @@
         <div class="field"><label>Domicilio / lugar de instalación</label><input id="c_dir" placeholder="Calle, colonia, ciudad"></div>
         <div class="field"><label>Correo (opcional)</label><input id="c_correo" placeholder="cliente@correo.com"></div>
       </div>
-      <div class="grid g2">
+      <div class="grid g3">
         <div class="field"><label>Fecha</label><input id="c_fecha" type="date"></div>
         <div class="field"><label>Vigencia de la cotización</label><input id="c_vigencia" placeholder="Ej. 15 días" value="15 días"></div>
+        <div class="field"><label>Fecha del trabajo (opcional)</label><input id="c_fechaTrabajo" type="date"><div class="hint">Se muestra en la Agenda</div></div>
       </div>
       <div class="field" style="margin-top:12px"><label>¿Qué necesita el cliente? (descripción del trabajo)</label><textarea id="c_necesidad" placeholder="Ej. Instalación de minisplit 1.5 Ton en recámara principal, tubería por pared exterior..."></textarea></div>
 
@@ -386,6 +441,7 @@
           <option value="">Todos los estados</option>
           <option>Cotización</option><option>Vendida</option><option>Instalada</option><option>Cancelada</option>
         </select>
+        <button class="btn btn-ghost btn-sm" onclick="exportHistCSV()">📊 Exportar a Excel</button>
       </div>
       <div class="tbl-wrap"><div id="histTable"></div></div>
     </div>
@@ -403,6 +459,52 @@
       </div>
       <div class="hint">Tip: multiplica largo × ancho del cuarto para los m². Cálculo estimado para clima caluroso (La Laguna); ajusta según tu experiencia.</div>
       <div id="cap_result" style="margin-top:18px"></div>
+    </div>
+  </section>
+
+  <!-- ============ AGENDA ============ -->
+  <section id="view-agenda" class="view">
+    <div class="card">
+      <div class="row-between">
+        <div><h2><svg viewBox="0 0 24 24" width="22" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Agenda de trabajos</h2>
+        <div class="sub"><span class="cal-dot trabajo" style="display:inline-block;vertical-align:-1px"></span> Instalaciones/trabajos &nbsp; <span class="cal-dot rec" style="display:inline-block;vertical-align:-1px"></span> Recordatorios</div></div>
+        <div class="year-nav">
+          <button class="icon-btn" onclick="calMove(-1)" title="Mes anterior"><svg viewBox="0 0 24 24" width="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+          <strong id="cal-mes" style="min-width:130px"></strong>
+          <button class="icon-btn" onclick="calMove(1)" title="Mes siguiente"><svg viewBox="0 0 24 24" width="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg></button>
+        </div>
+      </div>
+      <div class="cal-head"><div>Lun</div><div>Mar</div><div>Mié</div><div>Jue</div><div>Vie</div><div>Sáb</div><div>Dom</div></div>
+      <div class="cal-grid" id="cal-grid"></div>
+      <div class="hint" style="margin-top:10px">Toca un día para ver su detalle. Para programar un trabajo, ponle "Fecha del trabajo" a la cotización; los recordatorios se agendan en su pestaña.</div>
+    </div>
+    <div class="card" id="cal-detalle-card" style="display:none">
+      <h2 id="cal-detalle-titulo"></h2>
+      <div id="cal-detalle"></div>
+    </div>
+  </section>
+
+  <!-- ============ GASTOS ============ -->
+  <section id="view-gastos" class="view">
+    <div class="card">
+      <h2><svg viewBox="0 0 24 24" width="22" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"><path d="M2 7h20v14H2zM16 3l-4 4-4-4"/><path d="M12 12v5M9.5 13.5h5"/></svg>Registrar gasto</h2>
+      <div class="sub">Anota lo que gastas (equipo, material, gasolina...) para conocer tu utilidad real.</div>
+      <div class="grid g3">
+        <div class="field"><label>Fecha</label><input id="g_fecha" type="date"></div>
+        <div class="field"><label>Concepto</label><input id="g_concepto" placeholder="Ej. Minisplit para instalación de Ana"></div>
+        <div class="field"><label>Categoría</label><select id="g_cat"><option>Equipo</option><option>Material</option><option>Gasolina</option><option>Herramienta</option><option>Otro</option></select></div>
+      </div>
+      <div class="grid g3" style="margin-top:12px">
+        <div class="field"><label>Monto ($)</label><input id="g_monto" type="number" min="0" placeholder="0"></div>
+      </div>
+      <div class="btn-row"><button class="btn btn-primary" onclick="addGasto()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Registrar gasto</button></div>
+    </div>
+    <div class="card">
+      <div class="row-between">
+        <div><h2>Gastos registrados</h2><div class="sub" id="gastos-resumen"></div></div>
+        <button class="btn btn-ghost btn-sm" onclick="exportGastosCSV()">📊 Exportar a Excel</button>
+      </div>
+      <div class="tbl-wrap"><div id="gastosTable"></div></div>
     </div>
   </section>
 
@@ -511,6 +613,26 @@
 
 </main>
 
+<!-- Modal de pagos (anticipos y saldo) -->
+<div id="payModal">
+  <div class="pay-card">
+    <div class="row-between" style="margin-bottom:6px">
+      <h2 id="pay-titulo" style="font-size:1.15rem">Pagos</h2>
+      <button class="icon-btn" onclick="closePay()" title="Cerrar"><svg viewBox="0 0 24 24" width="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="sub" id="pay-cliente"></div>
+    <div id="pay-lista"></div>
+    <div class="totbox" style="margin-top:14px" id="pay-resumen"></div>
+    <div class="sec-title" style="margin-top:16px">Registrar pago / anticipo</div>
+    <div class="pay-add">
+      <div class="field"><label>Fecha</label><input id="pay_fecha" type="date"></div>
+      <div class="field"><label>Monto ($)</label><input id="pay_monto" type="number" min="0" placeholder="0"></div>
+      <button class="btn btn-primary" onclick="addPago()">Agregar</button>
+    </div>
+    <div class="field" style="margin-top:8px"><label>Nota (opcional)</label><input id="pay_nota" placeholder="Ej. Anticipo 50%, liquidación..."></div>
+  </div>
+</div>
+
 <!-- Pantalla de bloqueo con clave -->
 <div id="lockScreen">
   <div class="lock-card">
@@ -617,6 +739,7 @@ let DB = {
   equipos: load('mgcot_equipos', DEFAULT_EQUIPOS),
   materiales: load('mgcot_materiales', DEFAULT_MATERIALES),
   reminders: load('mgcot_reminders', []),
+  gastos: load('mgcot_gastos', []),
   settings: Object.assign({}, DEFAULT_SETTINGS, load('mgcot_settings', {}))
 };
 let editingId = null;
@@ -636,6 +759,7 @@ function save(){
   localStorage.setItem('mgcot_equipos',JSON.stringify(DB.equipos));
   localStorage.setItem('mgcot_materiales',JSON.stringify(DB.materiales));
   localStorage.setItem('mgcot_reminders',JSON.stringify(DB.reminders));
+  localStorage.setItem('mgcot_gastos',JSON.stringify(DB.gastos));
   localStorage.setItem('mgcot_settings',JSON.stringify(DB.settings));
 }
 function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),2600); }
@@ -651,6 +775,8 @@ function go(view){
   if(view==='catalogo') renderCatalog();
   if(view==='recordatorios') renderReminders();
   if(view==='cotizar') populateClientes();
+  if(view==='gastos') renderGastos();
+  if(view==='agenda') renderAgenda();
 }
 document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>go(b.dataset.view));
 
@@ -742,7 +868,7 @@ function calc(){
 
 function resetForm(){
   editingId=null;
-  ['c_nombre','c_tel','c_dir','c_correo','c_necesidad','c_notas'].forEach(id=>$('#'+id).value='');
+  ['c_nombre','c_tel','c_dir','c_correo','c_necesidad','c_notas','c_fechaTrabajo'].forEach(id=>$('#'+id).value='');
   $('#c_fecha').value=todayISO(); $('#c_vigencia').value='15 días';
   $('#c_desc').value=0; $('#c_iva').value=0; $('#c_estado').value='Cotización';
   $('#eqLines').innerHTML=''; $('#matLines').innerHTML=''; $('#servLines').innerHTML='';
@@ -768,7 +894,7 @@ function saveQuote(alsoPrint){
   }
   Object.assign(q,{
     cliente:{nombre, tel:$('#c_tel').value.trim(), dir:$('#c_dir').value.trim(), correo:$('#c_correo').value.trim()},
-    fecha:$('#c_fecha').value, vigencia:$('#c_vigencia').value.trim(),
+    fecha:$('#c_fecha').value, vigencia:$('#c_vigencia').value.trim(), fechaTrabajo:$('#c_fechaTrabajo').value,
     necesidad:$('#c_necesidad').value.trim(), notas:$('#c_notas').value.trim(),
     equipos, materiales, servicios,
     desc:t.desc, ivaPct:t.ivaPct, subtotal:t.subtotal, iva:t.iva, total:t.total,
@@ -787,7 +913,7 @@ function editQuote(id){
   $('#cot-title').textContent='Editar '+q.folio;
   $('#cot-folio-label').textContent='Editando folio '+q.folio;
   $('#c_nombre').value=q.cliente.nombre; $('#c_tel').value=q.cliente.tel||''; $('#c_dir').value=q.cliente.dir||''; $('#c_correo').value=q.cliente.correo||'';
-  $('#c_fecha').value=q.fecha||todayISO(); $('#c_vigencia').value=q.vigencia||''; $('#c_necesidad').value=q.necesidad||''; $('#c_notas').value=q.notas||'';
+  $('#c_fecha').value=q.fecha||todayISO(); $('#c_vigencia').value=q.vigencia||''; $('#c_fechaTrabajo').value=q.fechaTrabajo||''; $('#c_necesidad').value=q.necesidad||''; $('#c_notas').value=q.notas||'';
   $('#c_desc').value=q.desc||0; $('#c_iva').value=q.ivaPct||0; $('#c_estado').value=q.estado||'Cotización';
   $('#eqLines').innerHTML=''; $('#matLines').innerHTML=''; $('#servLines').innerHTML='';
   q.equipos.forEach(e=>{const idx=DB.equipos.findIndex(x=>x.n===e.nombre); addEq({idx:idx>-1?idx:0, cant:e.cant, precio:e.precio});});
@@ -816,11 +942,13 @@ function renderHist(){
       <td><strong>${x.folio}</strong></td>
       <td>${fmtFecha(x.fecha)}</td>
       <td>${x.cliente.nombre}${x.cliente.tel?`<br><span class="hint">${x.cliente.tel}</span>`:''}</td>
-      <td style="text-align:right;font-weight:700">${money(x.total)}</td>
+      <td style="text-align:right;font-weight:700">${money(x.total)}${saldoTag(x)}</td>
       <td><select class="status-sel ${badgeClass[x.estado]}" onchange="setEstado('${x.id}',this.value)">
         ${['Cotización','Vendida','Instalada','Cancelada'].map(e=>`<option ${e===x.estado?'selected':''}>${e}</option>`).join('')}
       </select></td>
       <td style="text-align:right;white-space:nowrap">
+        <button class="icon-btn" title="Pagos / anticipos" style="color:#57e39c" onclick="openPay('${x.id}')"><svg viewBox="0 0 24 24" width="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></button>
+        <button class="icon-btn" title="Duplicar como nueva" onclick="dupQuote('${x.id}')"><svg viewBox="0 0 24 24" width="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
         <button class="icon-btn" title="Ver / Imprimir" onclick="openPrint('${x.id}')"><svg viewBox="0 0 24 24" width="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="6" y="9" width="12" height="9" rx="1"/><path d="M6 18H4a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-2M6 9V3h12v6"/></svg></button>
         <button class="icon-btn" title="Enviar por WhatsApp (foto)" style="color:#25d366" onclick="sendWhatsApp('${x.id}')"><svg viewBox="0 0 24 24" width="16" fill="currentColor"><path d="M17.5 14.4c-.3-.2-1.7-.8-2-.9-.3-.1-.5-.2-.6.2-.2.3-.7.9-.9 1.1-.2.2-.3.2-.6.1-1.7-.9-2.9-1.6-4-3.6-.3-.5.3-.5.8-1.5.1-.2 0-.4 0-.5 0-.2-.6-1.6-.9-2.1-.2-.5-.4-.5-.6-.5h-.5c-.2 0-.5.1-.7.3-.9.9-1.1 2-.7 3.2.5 1.6 1.6 3 1.8 3.2.2.3 3 4.6 7.3 6.2 2.7 1 3.2.7 3.8.7.6-.1 1.7-.7 2-1.4.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.6-.4zM12 2a10 10 0 0 0-8.6 15l-1.3 4.7 4.8-1.3A10 10 0 1 0 12 2z"/></svg></button>
         <button class="icon-btn" title="Editar" onclick="editQuote('${x.id}')"><svg viewBox="0 0 24 24" width="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></button>
@@ -835,6 +963,26 @@ function emptyMsg(t,s){ return `<div class="empty"><svg viewBox="0 0 24 24" fill
 function fmtFecha(iso){ if(!iso)return'—'; const [y,m,d]=iso.split('-'); return `${d}/${m}/${y}`; }
 
 /* ============================================================
+   PAGOS (anticipos y saldos)
+   Si una cotización tiene pagos registrados, lo cobrado = suma de pagos.
+   Si no tiene pagos y está Vendida/Instalada, se asume pagada completa.
+   ============================================================ */
+function pagosDe(q){ return Array.isArray(q.pagos)?q.pagos:[]; }
+function cobradoDe(q){
+  if(q.estado==='Cancelada') return 0;
+  const p=pagosDe(q);
+  if(p.length) return p.reduce((s,x)=>s+(+x.monto||0),0);
+  return (q.estado==='Vendida'||q.estado==='Instalada') ? q.total : 0;
+}
+function saldoDe(q){ if(q.estado==='Cancelada') return 0; return Math.max(0, q.total - cobradoDe(q)); }
+function ingresoEnMes(q, ym){
+  if(q.estado==='Cancelada') return 0;
+  const p=pagosDe(q);
+  if(p.length) return p.filter(x=>(x.fecha||'').slice(0,7)===ym).reduce((s,x)=>s+(+x.monto||0),0);
+  return ((q.estado==='Vendida'||q.estado==='Instalada') && (q.fecha||'').slice(0,7)===ym) ? q.total : 0;
+}
+
+/* ============================================================
    PANEL / DASHBOARD
    ============================================================ */
 function renderPanel(){
@@ -843,16 +991,19 @@ function renderPanel(){
   $('#panel-mes').textContent=meses[now.getMonth()]+' '+now.getFullYear();
 
   const ingresadas = DB.quotes.filter(q=>q.estado==='Vendida'||q.estado==='Instalada');
-  const ingresoMes = ingresadas.filter(q=>(q.fecha||'').slice(0,7)===mesActual).reduce((s,q)=>s+q.total,0);
-  const ingresoTotal = ingresadas.reduce((s,q)=>s+q.total,0);
-  const pendientes = DB.quotes.filter(q=>q.estado==='Cotización');
-  const pendMonto = pendientes.reduce((s,q)=>s+q.total,0);
+  const ingresoMes = DB.quotes.reduce((s,q)=>s+ingresoEnMes(q,mesActual),0);
+  const ingresoTotal = DB.quotes.reduce((s,q)=>s+cobradoDe(q),0);
+  const gastoMes = DB.gastos.filter(g=>(g.fecha||'').slice(0,7)===mesActual).reduce((s,g)=>s+(+g.monto||0),0);
+  const utilidadMes = ingresoMes-gastoMes;
+  const porCobrar = DB.quotes.reduce((s,q)=>s+saldoDe(q),0);
 
   $('#stats').innerHTML=`
-    ${statCard('linear-gradient(135deg,var(--cyan),var(--teal))', money(ingresoMes), 'Ingresos este mes','M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6')}
-    ${statCard('linear-gradient(135deg,var(--amber),#d97a1c)', money(pendMonto), pendientes.length+' cotizaciones por cerrar','M12 8v4l3 3M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z')}
-    ${statCard('linear-gradient(135deg,var(--green),#0f7a3d)', String(ingresadas.length), 'Ventas / instalaciones','M20 6L9 17l-5-5')}
-    ${statCard('linear-gradient(135deg,var(--navy),#1a4b63)', money(ingresoTotal), 'Ingreso total acumulado','M3 3v18h18M7 14l4-4 4 4 5-6')}
+    ${statCard('linear-gradient(135deg,var(--cyan),var(--teal))', money(ingresoMes), 'Cobrado este mes','M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6')}
+    ${statCard('linear-gradient(135deg,#e05656,#a83232)', money(gastoMes), 'Gastos este mes','M3 3v18h18M7 10l4 4 4-4 5 6')}
+    ${statCard('linear-gradient(135deg,'+(utilidadMes>=0?'var(--green),#0f7a3d':'#e05656,#a83232')+')', money(utilidadMes), 'Utilidad este mes','M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6')}
+    ${statCard('linear-gradient(135deg,var(--amber),#d97a1c)', money(porCobrar), 'Por cobrar (saldos y cotizaciones)','M12 8v4l3 3M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z')}
+    ${statCard('linear-gradient(135deg,#5a8de0,#3257a8)', String(ingresadas.length), 'Ventas / instalaciones','M20 6L9 17l-5-5')}
+    ${statCard('linear-gradient(135deg,var(--navy),#1a4b63)', money(ingresoTotal), 'Cobrado acumulado','M3 3v18h18M7 14l4-4 4 4 5-6')}
   `;
   renderCharts();
   renderBars();
@@ -866,8 +1017,8 @@ function statCard(bg,num,lbl,path){
   return `<div class="stat"><div class="ic" style="background:${bg}"><svg viewBox="0 0 24 24" width="20" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="${path}"/></svg></div><div class="num">${num}</div><div class="lbl">${lbl}</div></div>`;
 }
 function renderCharts(){
-  const cobrado = DB.quotes.filter(q=>q.estado==='Vendida'||q.estado==='Instalada').reduce((s,q)=>s+q.total,0);
-  const porCobrar = DB.quotes.filter(q=>q.estado==='Cotización').reduce((s,q)=>s+q.total,0);
+  const cobrado = DB.quotes.reduce((s,q)=>s+cobradoDe(q),0);
+  const porCobrar = DB.quotes.reduce((s,q)=>s+saldoDe(q),0);
   const pie1 = pieCard('Ingresos (dinero)', [
     {label:'Cobrado', value:cobrado, color:'#57e39c'},
     {label:'Por cobrar', value:porCobrar, color:'#f3b76b'}
@@ -885,20 +1036,29 @@ function compact(n){ return n>=1000 ? '$'+(n/1000).toFixed(n>=10000?0:1)+'k' : '
 function changeBarYear(d){ barYear+=d; renderBars(); }
 function renderBars(){
   const meses=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-  const data=new Array(12).fill(0);
-  DB.quotes.filter(q=>q.estado==='Vendida'||q.estado==='Instalada').forEach(q=>{
-    const f=q.fecha||''; if(f.slice(0,4)===String(barYear)){ const mi=+f.slice(5,7)-1; if(mi>=0&&mi<12) data[mi]+=q.total; }
+  const ing=new Array(12).fill(0), gas=new Array(12).fill(0);
+  const y=String(barYear);
+  for(let mi=0;mi<12;mi++){
+    const ym=y+'-'+String(mi+1).padStart(2,'0');
+    ing[mi]=DB.quotes.reduce((s,q)=>s+ingresoEnMes(q,ym),0);
+  }
+  DB.gastos.forEach(g=>{
+    const f=g.fecha||''; if(f.slice(0,4)===y){ const mi=+f.slice(5,7)-1; if(mi>=0&&mi<12) gas[mi]+=(+g.monto||0); }
   });
-  const max=Math.max(...data,1), totalYear=data.reduce((a,b)=>a+b,0);
+  const max=Math.max(...ing,...gas,1);
+  const totIng=ing.reduce((a,b)=>a+b,0), totGas=gas.reduce((a,b)=>a+b,0);
   $('#bar-year').textContent=barYear;
-  $('#panel-bars').innerHTML=data.map((v,i)=>{
+  $('#panel-bars').innerHTML=ing.map((v,i)=>{
     const h=v>0?Math.max(4,v/max*100):0;
-    return `<div class="bar-col" title="${meses[i]} ${barYear}: ${money(v)}">
+    const hg=gas[i]>0?Math.max(4,gas[i]/max*100):0;
+    return `<div class="bar-col" title="${meses[i]} ${barYear} — Cobrado: ${money(v)} · Gastos: ${money(gas[i])}">
       <div class="bar-val">${v>0?compact(v):''}</div>
-      <div class="bar-track"><div class="bar" style="height:${h}%"></div></div>
+      <div class="bar-track"><div class="bar" style="height:${h}%"></div><div class="bar g" style="height:${hg}%"></div></div>
       <div class="bar-lbl">${meses[i]}</div></div>`;
   }).join('');
-  $('#bar-total').textContent = totalYear>0 ? `Total del año ${barYear}: ${money(totalYear)}` : `Sin ingresos registrados en ${barYear}.`;
+  $('#bar-total').innerHTML = (totIng>0||totGas>0)
+    ? `<span class="dot-leg" style="background:linear-gradient(180deg,var(--accent),var(--accent2))"></span> Cobrado ${money(totIng)} &nbsp; <span class="dot-leg" style="background:linear-gradient(180deg,#f3b76b,#d97a1c)"></span> Gastos ${money(totGas)} &nbsp; · &nbsp; <strong>Utilidad ${barYear}: ${money(totIng-totGas)}</strong>`
+    : `Sin movimientos registrados en ${barYear}.`;
 }
 function pieCard(title, data, fmt){
   const total = data.reduce((s,d)=>s+d.value,0);
@@ -953,7 +1113,7 @@ function exportData(){
 function importData(ev){
   const f=ev.target.files[0]; if(!f)return; const r=new FileReader();
   r.onload=()=>{ try{ const d=JSON.parse(r.result);
-    if(d.quotes){DB.quotes=d.quotes;} if(d.equipos){DB.equipos=d.equipos;} if(d.materiales){DB.materiales=d.materiales;} if(d.reminders){DB.reminders=d.reminders;} if(d.settings){DB.settings=Object.assign({},DEFAULT_SETTINGS,d.settings);}
+    if(d.quotes){DB.quotes=d.quotes;} if(d.equipos){DB.equipos=d.equipos;} if(d.materiales){DB.materiales=d.materiales;} if(d.reminders){DB.reminders=d.reminders;} if(d.gastos){DB.gastos=d.gastos;} if(d.settings){DB.settings=Object.assign({},DEFAULT_SETTINGS,d.settings);}
     save(); loadSettings(); populateClientes(); renderPanel(); toast('Respaldo restaurado ✓'); go('panel');
   }catch(e){ toast('Archivo no válido'); } };
   r.readAsText(f); ev.target.value='';
@@ -974,6 +1134,7 @@ async function shareData(){
 function mergeData(d){
   if(Array.isArray(d.quotes)){ const m=new Map(DB.quotes.map(q=>[q.id,q])); d.quotes.forEach(q=>{ if(q&&q.id) m.set(q.id,q); }); DB.quotes=[...m.values()].sort((a,b)=>(b.creado||'').localeCompare(a.creado||'')); }
   if(Array.isArray(d.reminders)){ const m=new Map(DB.reminders.map(r=>[r.id,r])); d.reminders.forEach(r=>{ if(r&&r.id) m.set(r.id,r); }); DB.reminders=[...m.values()]; }
+  if(Array.isArray(d.gastos)){ const m=new Map(DB.gastos.map(g=>[g.id,g])); d.gastos.forEach(g=>{ if(g&&g.id) m.set(g.id,g); }); DB.gastos=[...m.values()]; }
   if(Array.isArray(d.materiales)) d.materiales.forEach(x=>{ if(!DB.materiales.some(y=>y.n===x.n)) DB.materiales.push(x); });
   if(Array.isArray(d.equipos)) d.equipos.forEach(x=>{ if(!DB.equipos.some(y=>y.n===x.n)) DB.equipos.push(x); });
   if(d.settings && d.settings.folio) DB.settings.folio=Math.max(DB.settings.folio||1, d.settings.folio);
@@ -1025,6 +1186,7 @@ function sheetHTML(q){
       ${q.desc>0?`<div class="r"><span>Descuento</span><span>− ${money(q.desc)}</span></div>`:''}
       ${q.ivaPct>0?`<div class="r"><span>IVA ${q.ivaPct}%</span><span>${money(q.iva)}</span></div>`:''}
       <div class="r g"><span>TOTAL</span><span>${money(q.total)}</span></div>
+      ${pagosDe(q).length?`<div class="r"><span>Pagado</span><span>− ${money(cobradoDe(q))}</span></div><div class="r g" style="font-size:1rem"><span>SALDO</span><span>${money(saldoDe(q))}</span></div>`:''}
     </div>
     ${q.notas?`<div class="q-notes"><strong>Notas y condiciones:</strong><br>${q.notas.replace(/\n/g,'<br>')}</div>`:''}
     <div class="q-foot"><strong>${s.empresa}</strong> — ${s.pie||''}</div>
@@ -1116,6 +1278,7 @@ function drawQuoteCanvas(q){
     if(q.desc>0) tot('Descuento','− '+money(q.desc),false);
     if(q.ivaPct>0) tot('IVA '+q.ivaPct+'%',money(q.iva),false);
     tot('TOTAL',money(q.total),true);
+    if(pagosDe(q).length){ tot('Pagado','− '+money(cobradoDe(q)),false); tot('SALDO',money(saldoDe(q)),true); }
     y+=12;
     // Notas
     if(q.notas){
@@ -1280,6 +1443,167 @@ function renderPanelReminders(){
     const venc=r.fecha<hoy;
     return `<tr><td style="width:150px"><strong>${fmtFecha(r.fecha)}</strong> ${venc?'<span class="badge b-canc">Vencido</span>':'<span class="badge b-vend">Próximo</span>'}</td><td>${r.cliente}${r.nota?`<br><span class="hint">${r.nota}</span>`:''}</td><td style="text-align:right">${r.tel?`<button class="icon-btn" style="color:#25d366" title="WhatsApp" onclick="waRemind('${r.id}')">${WA_SVG}</button>`:''}</td></tr>`;
   }).join('')}</tbody></table>`;
+}
+
+/* ============================================================
+   PAGOS: modal de anticipos y saldo
+   ============================================================ */
+const TRASH_SVG='<svg viewBox="0 0 24 24" width="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M8 6V4h8v2m1 0v14H7V6"/></svg>';
+let payId=null;
+function saldoTag(q){
+  if(q.estado==='Cancelada' || !pagosDe(q).length) return '';
+  const s=saldoDe(q);
+  return s>0 ? `<br><span class="hint" style="color:#f3b76b">Debe ${money(s)}</span>`
+             : `<br><span class="hint" style="color:#57e39c">Pagado ✓</span>`;
+}
+function openPay(id){
+  const q=DB.quotes.find(x=>x.id===id); if(!q)return;
+  payId=id;
+  $('#pay_fecha').value=todayISO(); $('#pay_monto').value=''; $('#pay_nota').value='';
+  renderPay();
+  $('#payModal').classList.add('show');
+}
+function closePay(){ $('#payModal').classList.remove('show'); payId=null; renderHist(); renderPanel(); }
+$('#payModal').addEventListener('click',e=>{ if(e.target.id==='payModal') closePay(); });
+function renderPay(){
+  const q=DB.quotes.find(x=>x.id===payId); if(!q)return;
+  $('#pay-titulo').textContent='Pagos de '+q.folio;
+  $('#pay-cliente').textContent=q.cliente.nombre+' — Total del trabajo: '+money(q.total);
+  const p=pagosDe(q);
+  $('#pay-lista').innerHTML = p.length
+    ? p.map(x=>`<div class="pay-row"><span>${fmtFecha(x.fecha)}${x.nota?' · '+x.nota:''}</span><span style="display:flex;align-items:center;gap:8px"><b>${money(x.monto)}</b><button class="icon-btn del" style="width:32px;height:32px" onclick="delPago('${x.id}')" title="Eliminar pago">${TRASH_SVG}</button></span></div>`).join('')
+    : '<div class="hint">Sin pagos registrados. Ojo: si no registras pagos y la marcas Vendida/Instalada, se considera pagada completa.</div>';
+  const cob=p.reduce((s,x)=>s+(+x.monto||0),0);
+  $('#pay-resumen').innerHTML=`
+    <div class="totrow"><span>Pagado</span><span class="val" style="color:#57e39c">${money(cob)}</span></div>
+    <div class="totrow grand" style="font-size:1.15rem"><span>Saldo</span><span style="color:${q.total-cob>0?'#f3b76b':'#57e39c'}">${money(Math.max(0,q.total-cob))}</span></div>`;
+}
+function addPago(){
+  const q=DB.quotes.find(x=>x.id===payId); if(!q)return;
+  const monto=+$('#pay_monto').value||0;
+  if(monto<=0){ toast('Escribe el monto del pago'); return; }
+  if(!q.pagos) q.pagos=[];
+  q.pagos.push({id:uid(), fecha:$('#pay_fecha').value||todayISO(), monto, nota:$('#pay_nota').value.trim()});
+  save(); $('#pay_monto').value=''; $('#pay_nota').value='';
+  renderPay(); toast('Pago registrado ✓');
+}
+function delPago(pid){
+  const q=DB.quotes.find(x=>x.id===payId); if(!q||!q.pagos)return;
+  q.pagos=q.pagos.filter(x=>x.id!==pid); save(); renderPay();
+}
+
+/* ============================================================
+   DUPLICAR COTIZACIÓN
+   ============================================================ */
+function dupQuote(id){
+  const orig=DB.quotes.find(x=>x.id===id); if(!orig)return;
+  editQuote(id);
+  editingId=null;
+  $('#c_fecha').value=todayISO();
+  $('#c_fechaTrabajo').value='';
+  $('#c_estado').value='Cotización';
+  $('#cot-title').textContent='Nueva cotización (copia de '+orig.folio+')';
+  $('#cot-folio-label').textContent='Al guardar se le asignará el folio COT-'+String(DB.settings.folio).padStart(4,'0');
+  toast('Copia lista: ajusta lo necesario y guarda');
+}
+
+/* ============================================================
+   EXPORTAR A EXCEL (CSV)
+   ============================================================ */
+function csvCell(v){ return '"'+String(v==null?'':v).replace(/"/g,'""')+'"'; }
+function downloadCSV(nombre, filas){
+  const csv='﻿'+filas.map(f=>f.map(csvCell).join(',')).join('\r\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+  a.download=nombre; document.body.appendChild(a); a.click(); a.remove();
+  toast('Archivo para Excel descargado ✓');
+}
+function exportHistCSV(){
+  const filas=[['Folio','Fecha','Cliente','Teléfono','Estado','Total','Pagado','Saldo','Fecha trabajo']];
+  DB.quotes.forEach(q=>filas.push([q.folio,q.fecha||'',q.cliente.nombre,q.cliente.tel||'',q.estado,q.total,cobradoDe(q),saldoDe(q),q.fechaTrabajo||'']));
+  downloadCSV('mg-historial-'+todayISO()+'.csv', filas);
+}
+function exportGastosCSV(){
+  const filas=[['Fecha','Concepto','Categoría','Monto']];
+  [...DB.gastos].sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||'')).forEach(g=>filas.push([g.fecha||'',g.concepto||'',g.cat||'',g.monto]));
+  downloadCSV('mg-gastos-'+todayISO()+'.csv', filas);
+}
+
+/* ============================================================
+   GASTOS
+   ============================================================ */
+function addGasto(){
+  const monto=+$('#g_monto').value||0, concepto=$('#g_concepto').value.trim();
+  if(!concepto){ toast('Escribe el concepto del gasto'); $('#g_concepto').focus(); return; }
+  if(monto<=0){ toast('Escribe el monto'); $('#g_monto').focus(); return; }
+  DB.gastos.unshift({id:uid(), fecha:$('#g_fecha').value||todayISO(), concepto, cat:$('#g_cat').value, monto});
+  save();
+  $('#g_concepto').value=''; $('#g_monto').value='';
+  renderGastos(); toast('Gasto registrado ✓');
+}
+function delGasto(id){ if(confirm('¿Eliminar este gasto?')){ DB.gastos=DB.gastos.filter(g=>g.id!==id); save(); renderGastos(); toast('Gasto eliminado'); } }
+function renderGastos(){
+  if(!$('#g_fecha').value) $('#g_fecha').value=todayISO();
+  const cont=$('#gastosTable');
+  const mesActual=new Date().toISOString().slice(0,7);
+  const totalMes=DB.gastos.filter(g=>(g.fecha||'').slice(0,7)===mesActual).reduce((s,g)=>s+(+g.monto||0),0);
+  const total=DB.gastos.reduce((s,g)=>s+(+g.monto||0),0);
+  $('#gastos-resumen').textContent='Este mes: '+money(totalMes)+' · Acumulado: '+money(total);
+  if(!DB.gastos.length){ cont.innerHTML=emptyMsg('Sin gastos registrados','Registra tus compras y gastos para conocer tu utilidad real.'); return; }
+  const list=[...DB.gastos].sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||''));
+  cont.innerHTML=`<table><thead><tr><th>Fecha</th><th>Concepto</th><th>Categoría</th><th style="text-align:right">Monto</th><th></th></tr></thead><tbody>${
+    list.map(g=>`<tr><td>${fmtFecha(g.fecha)}</td><td>${g.concepto}</td><td><span class="pill">${g.cat||'Otro'}</span></td><td style="text-align:right;font-weight:700">${money(g.monto)}</td><td style="text-align:right"><button class="icon-btn del" onclick="delGasto('${g.id}')" title="Eliminar">${TRASH_SVG}</button></td></tr>`).join('')
+  }</tbody></table>`;
+}
+
+/* ============================================================
+   AGENDA (calendario mensual de trabajos y recordatorios)
+   ============================================================ */
+let calDate=new Date(); calDate.setDate(1);
+let calSel=null;
+function calMove(d){ calDate.setMonth(calDate.getMonth()+d); calSel=null; renderAgenda(); }
+function itemsDeDia(iso){
+  return {
+    trabajos: DB.quotes.filter(q=>q.fechaTrabajo===iso && q.estado!=='Cancelada'),
+    recs: DB.reminders.filter(r=>r.fecha===iso && !r.hecho)
+  };
+}
+function renderAgenda(){
+  const mesesL=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const y=calDate.getFullYear(), m=calDate.getMonth();
+  $('#cal-mes').textContent=mesesL[m]+' '+y;
+  const start=(new Date(y,m,1).getDay()+6)%7;   // lunes = 0
+  const dias=new Date(y,m+1,0).getDate();
+  const hoy=todayISO();
+  let html='';
+  for(let i=0;i<start;i++) html+='<div class="cal-cell out"></div>';
+  for(let d=1;d<=dias;d++){
+    const iso=y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    const {trabajos,recs}=itemsDeDia(iso);
+    const dots=trabajos.map(()=>'<span class="cal-dot trabajo"></span>').join('')+recs.map(()=>'<span class="cal-dot rec"></span>').join('');
+    html+=`<div class="cal-cell${iso===hoy?' today':''}${iso===calSel?' sel':''}" onclick="calSelect('${iso}')"><div class="cal-num">${d}</div><div class="cal-dots">${dots}</div></div>`;
+  }
+  $('#cal-grid').innerHTML=html;
+  renderCalDetalle();
+}
+function calSelect(iso){ calSel=iso; renderAgenda(); }
+function renderCalDetalle(){
+  const card=$('#cal-detalle-card');
+  if(!calSel){ card.style.display='none'; return; }
+  card.style.display='block';
+  $('#cal-detalle-titulo').textContent=fmtFecha(calSel);
+  const {trabajos,recs}=itemsDeDia(calSel);
+  if(!trabajos.length && !recs.length){ $('#cal-detalle').innerHTML='<div class="hint">Nada programado este día.</div>'; return; }
+  let html='';
+  trabajos.forEach(q=>{
+    html+=`<div class="pay-row"><span><span class="cal-dot trabajo" style="display:inline-block;margin-right:7px"></span><strong>${q.folio}</strong> — ${q.cliente.nombre}${q.necesidad?'<br><span class="hint">'+q.necesidad+'</span>':''}</span>
+      <span style="display:flex;align-items:center;gap:8px"><b>${money(q.total)}</b><button class="btn btn-ghost btn-sm" onclick="openPrint('${q.id}')">Ver</button></span></div>`;
+  });
+  recs.forEach(r=>{
+    html+=`<div class="pay-row"><span><span class="cal-dot rec" style="display:inline-block;margin-right:7px"></span>${r.cliente}${r.nota?' — '+r.nota:''}</span>
+      <span style="display:flex;align-items:center;gap:6px">${r.tel?`<button class="icon-btn" style="color:#25d366" onclick="waRemind('${r.id}')" title="WhatsApp">${WA_SVG}</button>`:''}<button class="icon-btn" onclick="toggleReminder('${r.id}');renderAgenda()" title="Marcar hecho"><svg viewBox="0 0 24 24" width="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg></button></span></div>`;
+  });
+  $('#cal-detalle').innerHTML=html;
 }
 
 /* ============================================================
