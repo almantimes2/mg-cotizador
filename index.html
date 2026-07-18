@@ -13,6 +13,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="MG Cotizador">
+<script>/* aplicar el tema guardado antes del primer pintado */document.documentElement.dataset.theme=localStorage.getItem('mgcot_theme')||'dark';</script>
 <style>
   :root{
     /* colores para la HOJA imprimible (fondo blanco) */
@@ -25,10 +26,12 @@
     --vidrio-fuerte:rgba(255,255,255,.1); --line:rgba(255,255,255,.1);
     --hl:inset 0 1px 0 rgba(255,255,255,.18);
     --shadow:0 22px 55px -22px rgba(0,0,0,.75);
-    --display:'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', Arial, sans-serif;
-    --body:'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', Arial, sans-serif;
+    --display:-apple-system, 'SF Pro Display', system-ui, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    --body:-apple-system, 'SF Pro Text', system-ui, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
   }
-  *{margin:0;padding:0;box-sizing:border-box}
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  /* toque estilo iOS: los controles "rebotan" ligeramente al presionar */
+  .btn:active,.icon-btn:active,nav button:active,.preset:active,.seg button:active{transform:scale(.96)}
   body{font-family:var(--body);color:var(--text);background:#04060a;line-height:1.55;-webkit-font-smoothing:antialiased;min-height:100vh}
   /* fondo líquido oscuro: destellos de color que fluyen sobre negro */
   body::before{content:'';position:fixed;inset:-22%;z-index:-1;pointer-events:none;background:#04060a;
@@ -84,8 +87,13 @@
   .g3{grid-template-columns:1fr 1fr 1fr}
   @media(max-width:680px){.g2,.g3{grid-template-columns:1fr}}
   label{display:block;font-size:.82rem;font-weight:600;color:#c7d7dd;margin-bottom:5px}
-  input,select,textarea{width:100%;padding:11px 13px;border:1px solid rgba(255,255,255,.14);border-radius:12px;
+  .grid>.field,.pay-add>.field{min-width:0}
+  input,select,textarea{width:100%;min-width:0;padding:11px 13px;border:1px solid rgba(255,255,255,.14);border-radius:13px;
     background:rgba(255,255,255,.06);color:var(--text);transition:.15s;outline:none}
+  /* campo de fecha: que el botón del calendario no se salga del vidrio */
+  input[type="date"]{-webkit-appearance:none;appearance:none;padding-right:8px;position:relative}
+  input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.8);opacity:.85;cursor:pointer;margin-left:0;padding:0;width:18px;height:18px}
+  input[type="date"]::-webkit-inner-spin-button{display:none}
   input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(58,217,236,.2);background:rgba(255,255,255,.1)}
   select option{background:#0c1219;color:var(--text)}
   textarea{resize:vertical;min-height:64px}
@@ -295,6 +303,78 @@
   #sheet .q-parties .box{color:#132631}
   #sheet .q-foot{margin-top:24px;text-align:center;font-size:.8rem;color:#3a4c54;background:var(--paper);padding:14px;border-radius:12px}
   #sheet .q-foot strong{color:var(--teal)}
+
+  /* ---------- SELECTOR DE TEMA (control segmentado estilo iOS) ---------- */
+  .seg{display:flex;gap:4px;background:rgba(255,255,255,.06);border:1px solid var(--vidrio-borde);
+    border-radius:999px;padding:4px;max-width:340px;box-shadow:var(--hl)}
+  .seg button{flex:1;padding:11px 14px;border:none;border-radius:999px;background:transparent;color:var(--dim);
+    font-weight:600;font-size:.92rem;cursor:pointer;transition:.2s;font-family:inherit}
+  .seg button.active{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#04141a;
+    box-shadow:0 8px 20px -8px rgba(39,194,214,.7),var(--hl)}
+
+  /* ============================================================
+     TEMA CLARO "LIQUID GLASS" (vidrio esmerilado sobre fondo claro)
+     Se activa con  html[data-theme="light"]
+     ============================================================ */
+  html[data-theme="light"]{
+    --text:#0d2b3e; --dim:#5d7480; --accent:#0f97ad; --accent2:#16899c;
+    --vidrio-borde:rgba(255,255,255,.72);
+    --hl:inset 0 1px 0 rgba(255,255,255,.9);
+    --shadow:0 22px 55px -24px rgba(10,31,46,.3);
+  }
+  html[data-theme="light"] body{background:#e7f2f5;color:var(--text)}
+  html[data-theme="light"] body::before{background:#e7f2f5;
+    background-image:
+      radial-gradient(42% 36% at 18% 22%, rgba(39,194,214,.5), transparent 70%),
+      radial-gradient(36% 32% at 82% 12%, rgba(22,137,156,.42), transparent 70%),
+      radial-gradient(46% 42% at 72% 82%, rgba(232,155,60,.3), transparent 70%),
+      radial-gradient(32% 30% at 12% 86%, rgba(39,194,214,.36), transparent 70%);
+    filter:blur(40px) saturate(1.1)}
+  html[data-theme="light"] .topbar,
+  html[data-theme="light"] .card,
+  html[data-theme="light"] .stat{background:linear-gradient(165deg,rgba(255,255,255,.68),rgba(255,255,255,.4))}
+  html[data-theme="light"] .logo{color:var(--navy)}
+  html[data-theme="light"] nav button:hover{background:rgba(255,255,255,.6);color:var(--navy)}
+  html[data-theme="light"] nav button.active,
+  html[data-theme="light"] .seg button.active,
+  html[data-theme="light"] .btn-primary{color:#fff}
+  html[data-theme="light"] .btn-ghost{background:rgba(255,255,255,.68);color:var(--navy)}
+  html[data-theme="light"] .btn-ghost:hover{background:#fff}
+  html[data-theme="light"] .btn-dark{background:var(--navy);color:#fff;border-color:transparent}
+  html[data-theme="light"] .icon-btn{background:rgba(255,255,255,.62);color:#41565f;border-color:rgba(255,255,255,.8)}
+  html[data-theme="light"] .icon-btn:hover{background:#fff;color:var(--accent)}
+  html[data-theme="light"] label{color:#33505e}
+  html[data-theme="light"] input,html[data-theme="light"] select,html[data-theme="light"] textarea{
+    background:rgba(255,255,255,.75);border-color:rgba(13,43,62,.15);color:var(--text)}
+  html[data-theme="light"] input:focus,html[data-theme="light"] select:focus,html[data-theme="light"] textarea:focus{background:#fff}
+  html[data-theme="light"] select option{background:#fff;color:var(--text)}
+  html[data-theme="light"] input[type="date"]::-webkit-calendar-picker-indicator{filter:none;opacity:.6}
+  html[data-theme="light"] th{border-bottom-color:rgba(13,43,62,.14)}
+  html[data-theme="light"] td{border-bottom-color:rgba(13,43,62,.08);color:var(--text)}
+  html[data-theme="light"] tr:hover td{background:rgba(255,255,255,.55)}
+  html[data-theme="light"] .line{background:rgba(255,255,255,.42);border-color:rgba(13,43,62,.16)}
+  html[data-theme="light"] .totbox{background:linear-gradient(160deg,rgba(22,137,156,.1),rgba(255,255,255,.3));border-color:rgba(22,137,156,.28)}
+  html[data-theme="light"] .totrow.grand,
+  html[data-theme="light"] .stat .num{color:var(--navy)}
+  html[data-theme="light"] .seg{background:rgba(255,255,255,.5)}
+  html[data-theme="light"] .preset{background:rgba(255,255,255,.62);color:#33505e;border-color:rgba(255,255,255,.85)}
+  html[data-theme="light"] .preset:hover{background:rgba(22,137,156,.12);color:var(--accent);border-color:var(--accent)}
+  html[data-theme="light"] .cal-cell{background:rgba(255,255,255,.52);border-color:rgba(13,43,62,.08)}
+  html[data-theme="light"] .cal-cell:hover{background:rgba(255,255,255,.85)}
+  html[data-theme="light"] .cal-cell.sel{background:rgba(22,137,156,.14)}
+  html[data-theme="light"] .pay-row{border-bottom-color:rgba(13,43,62,.08)}
+  html[data-theme="light"] .pay-card{background:linear-gradient(165deg,rgba(255,255,255,.97),rgba(238,248,250,.97))}
+  html[data-theme="light"] #payModal{background:rgba(13,43,62,.32)}
+  html[data-theme="light"] #lockScreen{background:rgba(231,242,245,.7)}
+  html[data-theme="light"] .lock-card{background:linear-gradient(165deg,rgba(255,255,255,.85),rgba(255,255,255,.6))}
+  html[data-theme="light"] .modal-bar{background:#f4fafb;color:var(--navy);border-bottom:1px solid rgba(13,43,62,.1)}
+  html[data-theme="light"] #toast{background:rgba(13,43,62,.94);color:#fff;border-color:rgba(255,255,255,.2)}
+  html[data-theme="light"] .b-cot{background:rgba(232,155,60,.18);color:#a3610f}
+  html[data-theme="light"] .b-vend{background:rgba(22,137,156,.15);color:#0f7c8c}
+  html[data-theme="light"] .b-inst{background:rgba(37,163,90,.16);color:#177a41}
+  html[data-theme="light"] .b-canc{background:rgba(214,69,69,.14);color:#b23a3a}
+  html[data-theme="light"] .pill{background:rgba(22,137,156,.13)}
+  html[data-theme="light"] .empty svg{opacity:.5}
 
   @media print{
     body{background:#fff}
@@ -571,6 +651,14 @@
       </div>
       <div class="field" style="margin-top:12px"><label>Leyenda de garantía / pie de página</label><input id="s_pie"></div>
       <div class="btn-row"><button class="btn btn-primary" onclick="saveSettings()">Guardar datos</button></div>
+    </div>
+    <div class="card">
+      <h2>Tema</h2>
+      <div class="sub">Elige cómo se ve la app en este dispositivo. Ambos usan el estilo de vidrio líquido.</div>
+      <div class="seg" id="themeSeg">
+        <button data-theme-opt="dark" onclick="setTheme('dark')">🌙 Oscuro</button>
+        <button data-theme-opt="light" onclick="setTheme('light')">☀️ Claro</button>
+      </div>
     </div>
     <div class="card">
       <h2>Clave de acceso</h2>
@@ -1685,8 +1773,24 @@ async function removePin(){
 }
 
 /* ============================================================
+   TEMA (claro / oscuro) — se guarda por dispositivo
+   ============================================================ */
+function applyTheme(t){
+  document.documentElement.dataset.theme=t;
+  document.querySelectorAll('#themeSeg button').forEach(b=>b.classList.toggle('active', b.dataset.themeOpt===t));
+  const meta=document.querySelector('meta[name="theme-color"]');
+  if(meta) meta.content = t==='light' ? '#e7f2f5' : '#04060a';
+}
+function setTheme(t){
+  localStorage.setItem('mgcot_theme',t);
+  applyTheme(t);
+  toast(t==='light' ? 'Tema claro ✓' : 'Tema oscuro ✓');
+}
+
+/* ============================================================
    INICIO
    ============================================================ */
+applyTheme(localStorage.getItem('mgcot_theme')||'dark');
 loadSettings();
 populateClientes();
 resetForm();
