@@ -1,6 +1,6 @@
 /* Service Worker de MG Cotizador — permite que la app funcione sin internet.
    Al cambiar la app, sube el número de versión (CACHE) para forzar la actualización. */
-const CACHE = 'mgcot-v5';
+const CACHE = 'mgcot-v6';
 const ASSETS = [
   './',
   './index.html',

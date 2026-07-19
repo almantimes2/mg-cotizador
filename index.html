@@ -13,7 +13,10 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="MG Cotizador">
-<script>/* aplicar el tema guardado antes del primer pintado */document.documentElement.dataset.theme=localStorage.getItem('mgcot_theme')||'dark';</script>
+<script>/* aplicar el tema guardado antes del primer pintado (auto = seguir al sistema) */
+(function(){var t=localStorage.getItem('mgcot_theme')||'dark';
+if(t==='auto'){t=matchMedia('(prefers-color-scheme: light)').matches?'light':'dark';}
+document.documentElement.dataset.theme=t;})();</script>
 <style>
   :root{
     /* colores para la HOJA imprimible (fondo blanco) */
@@ -455,9 +458,11 @@
     <div class="stats" id="stats"></div>
 
     <div class="card" style="margin-top:18px">
-      <h2>Ingresos y ventas</h2>
-      <div class="sub">Cómo se reparte tu dinero y tus trabajos.</div>
-      <div class="charts" id="panel-charts"></div>
+      <div class="row-between">
+        <div><h2>Ingresos y ventas</h2><div class="sub" style="margin-bottom:0">Cómo se reparte tu dinero y tus trabajos.</div></div>
+        <button class="btn btn-ghost btn-sm" onclick="sendReporte()">📷 Reporte del mes</button>
+      </div>
+      <div class="charts" id="panel-charts" style="margin-top:12px"></div>
     </div>
 
     <div class="card" style="margin-top:18px">
@@ -690,6 +695,7 @@
       <div class="seg" id="themeSeg">
         <button data-theme-opt="dark" onclick="setTheme('dark')">🌙 Oscuro</button>
         <button data-theme-opt="light" onclick="setTheme('light')">☀️ Claro</button>
+        <button data-theme-opt="auto" onclick="setTheme('auto')">✨ Auto</button>
       </div>
     </div>
     <div class="card">
@@ -721,6 +727,13 @@
       <div class="btn-row">
         <button class="btn btn-dark" onclick="exportData()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5M12 15V3"/></svg>Descargar respaldo</button>
         <label class="btn btn-ghost" style="cursor:pointer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5M12 3v12"/></svg>Restaurar respaldo<input type="file" accept=".json" onchange="importData(event)" hidden></label>
+      </div>
+      <div class="field" style="margin-top:16px"><label>Respaldo automático</label>
+        <div class="seg" id="abSeg" style="max-width:280px">
+          <button data-ab="1" onclick="setAutoBackup('1')">Activado</button>
+          <button data-ab="0" onclick="setAutoBackup('0')">Apagado</button>
+        </div>
+        <div class="hint" id="ab-info" style="margin-top:8px"></div>
       </div>
       <div class="hint" style="margin-top:12px">Tus datos se guardan automáticamente dentro de este navegador en tu laptop. Si borras el historial del navegador se podrían perder; por eso conviene descargar un respaldo de vez en cuando.</div>
     </div>
@@ -1225,10 +1238,39 @@ function saveSettings(){
   DB.settings.correo=$('#s_correo').value; DB.settings.ciudad=$('#s_ciudad').value; DB.settings.pie=$('#s_pie').value;
   save(); toast('Datos guardados ✓');
 }
-function exportData(){
+function exportData(msg){
   const blob=new Blob([JSON.stringify(DB,null,2)],{type:'application/json'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
-  a.download='mg-climas-respaldo-'+todayISO()+'.json'; a.click(); toast('Respaldo descargado ✓');
+  a.download='mg-climas-respaldo-'+todayISO()+'.json'; a.click();
+  localStorage.setItem('mgcot_lastbackup', String(Date.now()));
+  renderBackupInfo();
+  toast(msg||'Respaldo descargado ✓');
+}
+
+/* ---------- Respaldo automático (cada 7 días al abrir la app) ---------- */
+function autoBackupOn(){ return localStorage.getItem('mgcot_autobackup')!=='0'; }
+function setAutoBackup(v){
+  localStorage.setItem('mgcot_autobackup', v);
+  renderBackupInfo();
+  toast(v==='0' ? 'Respaldo automático apagado' : 'Respaldo automático activado ✓');
+}
+function renderBackupInfo(){
+  const seg=document.getElementById('abSeg'); if(!seg) return;
+  const on=autoBackupOn();
+  seg.querySelectorAll('button').forEach(b=>b.classList.toggle('active', b.dataset.ab===(on?'1':'0')));
+  const last=+localStorage.getItem('mgcot_lastbackup')||0;
+  const info=document.getElementById('ab-info');
+  if(info) info.textContent = (on?'Se descarga solo cada 7 días al abrir la app. ':'Apagado: descárgalo tú de vez en cuando. ')
+    + (last ? ('Último respaldo: '+new Date(last).toLocaleDateString('es-MX')+'.') : 'Aún no hay respaldos.');
+}
+function autoBackupCheck(){
+  if(!autoBackupOn()) return;
+  const hayDatos = DB.quotes.length||DB.gastos.length||DB.reminders.length;
+  const last=+localStorage.getItem('mgcot_lastbackup')||0;
+  if(!hayDatos){ return; }
+  if(Date.now()-last > 7*24*60*60*1000){
+    exportData('Respaldo automático descargado ✓ Guárdalo en un lugar seguro.');
+  }
 }
 function importData(ev){
   const f=ev.target.files[0]; if(!f)return; const r=new FileReader();
@@ -1451,6 +1493,140 @@ async function sendWhatsApp(id){
   toast('Foto descargada ✓  Adjúntala en el chat de WhatsApp.');
 }
 
+/* ---------- Compartir una imagen (recibo / reporte): compartir directo o descargar ---------- */
+async function shareImage(canvas, nombre, msg, tel){
+  const blob=await new Promise((res,rej)=>canvas.toBlob(b=>b?res(b):rej(new Error('img')),'image/png'));
+  const file=new File([blob], nombre, {type:'image/png'});
+  if(navigator.canShare && navigator.canShare({files:[file]})){
+    try{ await navigator.share({files:[file], text:msg, title:nombre}); return; }
+    catch(e){ if(e && e.name==='AbortError') return; }
+  }
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=nombre;
+  document.body.appendChild(a); a.click(); a.remove();
+  if(tel) window.open(waLink(tel, msg+' (Adjunto la imagen que se acaba de descargar.)'),'_blank');
+  toast('Imagen descargada ✓'+(tel?'  Adjúntala en el chat.':''));
+}
+function canvasHeader(ctx, s, W, P, titulo){
+  const F=(w,sz)=>w+' '+sz+"px -apple-system,'Segoe UI',Arial,sans-serif";
+  rRect(ctx,P,P,42,42,11); const g=ctx.createLinearGradient(P,P,P+42,P+42);
+  g.addColorStop(0,'#27c2d6'); g.addColorStop(1,'#16899c'); ctx.fillStyle=g; ctx.fill();
+  ctx.strokeStyle='#fff'; ctx.lineWidth=2.4; ctx.lineCap='round';
+  ctx.beginPath(); ctx.moveTo(P+11,P+17); ctx.lineTo(P+27,P+17); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(P+11,P+26); ctx.lineTo(P+31,P+26); ctx.stroke();
+  ctx.fillStyle='#0d2b3e'; ctx.font=F('800',19); ctx.fillText(s.empresa,P+54,P+19);
+  ctx.fillStyle='#47595f'; ctx.font=F('400',12);
+  ctx.fillText([s.ciudad,s.tel?('Tel: '+s.tel):''].filter(Boolean).join('  ·  '),P+54,P+37);
+  ctx.textAlign='right'; ctx.fillStyle='#16899c'; ctx.font=F('800',15); ctx.fillText(titulo,W-P,P+22); ctx.textAlign='left';
+  ctx.fillStyle='#16899c'; ctx.fillRect(P,P+56,W-2*P,3);
+  return P+82;
+}
+
+/* ---------- RECIBO DE PAGO (foto para WhatsApp) ---------- */
+function reciboCanvas(q,p){
+  const s=DB.settings, W=700, P=36, cw=W-2*P, scale=2;
+  const meas=document.createElement('canvas').getContext('2d');
+  const F=(w,sz)=>w+' '+sz+"px -apple-system,'Segoe UI',Arial,sans-serif";
+  meas.font=F('400',13.5);
+  const notaLines = p.nota ? (function(){ const words=('Concepto: '+p.nota).split(/\s+/); const lines=[]; let line='';
+    for(const wd of words){ const t=line?line+' '+wd:wd; if(meas.measureText(t).width>cw&&line){lines.push(line);line=wd;}else line=t; }
+    if(line)lines.push(line); return lines; })() : [];
+  const cob=cobradoDe(q), sal=saldoDe(q);
+  const H = 96 + 58 + 96 + notaLines.length*19 + 118 + 74 + P;
+  const canvas=document.createElement('canvas'); canvas.width=W*scale; canvas.height=H*scale;
+  const ctx=canvas.getContext('2d'); ctx.scale(scale,scale);
+  ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H);
+  let y=canvasHeader(ctx,s,W,P,'RECIBO DE PAGO');
+  ctx.fillStyle='#132631'; ctx.font=F('700',15); ctx.fillText('Recibí de: '+q.cliente.nombre, P, y);
+  ctx.textAlign='right'; ctx.fillStyle='#47595f'; ctx.font=F('400',13);
+  ctx.fillText('Fecha: '+fmtFecha(p.fecha)+'   ·   Cotización '+q.folio, W-P, y); ctx.textAlign='left';
+  y+=26;
+  rRect(ctx,P,y,cw,74,14); ctx.fillStyle='#eafaf1'; ctx.fill();
+  ctx.strokeStyle='#25a35a'; ctx.lineWidth=1.5; rRect(ctx,P,y,cw,74,14); ctx.stroke();
+  ctx.textAlign='center'; ctx.fillStyle='#177a41'; ctx.font=F('700',12);
+  ctx.fillText('PAGO RECIBIDO', W/2, y+24);
+  ctx.font=F('800',30); ctx.fillText(money(p.monto), W/2, y+58); ctx.textAlign='left';
+  y+=96;
+  if(notaLines.length){ ctx.fillStyle='#25373f'; ctx.font=F('400',13.5);
+    for(const nl of notaLines){ ctx.fillText(nl,P,y); y+=19; } y+=6; }
+  const row=(lbl,val,color,big)=>{ ctx.font=F(big?'800':'400', big?18:13.5); ctx.fillStyle=color||'#25373f';
+    ctx.fillText(lbl,P,y); ctx.textAlign='right'; ctx.fillText(val,W-P,y); ctx.textAlign='left'; y+=big?30:24; };
+  row('Total del trabajo', money(q.total));
+  row('Pagado a la fecha', money(cob), '#177a41');
+  ctx.strokeStyle='#16899c'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(P,y-8); ctx.lineTo(W-P,y-8); ctx.stroke(); y+=6;
+  row('SALDO PENDIENTE', money(sal), sal>0?'#b06d17':'#177a41', true);
+  y+=8;
+  rRect(ctx,P,y,cw,46,12); ctx.fillStyle='#f4fafb'; ctx.fill();
+  ctx.textAlign='center'; ctx.fillStyle='#3a4c54'; ctx.font=F('400',12);
+  ctx.fillText(s.empresa+' — Gracias por su pago.', W/2, y+28); ctx.textAlign='left';
+  return canvas;
+}
+async function sendRecibo(qid,pid){
+  const q=DB.quotes.find(x=>x.id===qid); if(!q)return;
+  const p=pagosDe(q).find(x=>x.id===pid); if(!p)return;
+  toast('Generando recibo...');
+  const msg='Hola'+(q.cliente.nombre?' '+q.cliente.nombre:'')+', le comparto su recibo de pago de '+money(p.monto)+' ('+q.folio+'). Saldo pendiente: '+money(saldoDe(q))+'. Gracias — '+DB.settings.empresa+'.';
+  try{ await shareImage(reciboCanvas(q,p), 'Recibo-'+q.folio+'.png', msg, q.cliente.tel); }
+  catch(e){ toast('No se pudo crear el recibo'); }
+}
+
+/* ---------- REPORTE MENSUAL (foto-resumen del negocio) ---------- */
+function reporteCanvas(){
+  const s=DB.settings, W=700, P=36, cw=W-2*P, scale=2;
+  const F=(w,sz)=>w+' '+sz+"px -apple-system,'Segoe UI',Arial,sans-serif";
+  const now=new Date(), ym=now.toISOString().slice(0,7);
+  const mesesL=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const titulo=mesesL[now.getMonth()]+' '+now.getFullYear();
+  const cobrado=DB.quotes.reduce((sm,q)=>sm+ingresoEnMes(q,ym),0);
+  const gastos=DB.gastos.filter(g=>(g.fecha||'').slice(0,7)===ym).reduce((sm,g)=>sm+(+g.monto||0),0);
+  const utilidad=cobrado-gastos;
+  const porCobrar=DB.quotes.reduce((sm,q)=>sm+saldoDe(q),0);
+  const delMes=DB.quotes.filter(q=>(q.fecha||'').slice(0,7)===ym);
+  const nCot=delMes.length;
+  const nVend=delMes.filter(q=>q.estado==='Vendida'||q.estado==='Instalada').length;
+  const eqCount={};
+  delMes.filter(q=>q.estado==='Vendida'||q.estado==='Instalada').forEach(q=>(q.equipos||[]).forEach(e=>{eqCount[e.nombre]=(eqCount[e.nombre]||0)+(+e.cant||1);}));
+  const top=Object.entries(eqCount).sort((a,b)=>b[1]-a[1]).slice(0,4);
+  const H = 96 + 26 + 176 + 66 + (top.length?34+top.length*26:0) + 66 + P;
+  const canvas=document.createElement('canvas'); canvas.width=W*scale; canvas.height=H*scale;
+  const ctx=canvas.getContext('2d'); ctx.scale(scale,scale);
+  ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H);
+  let y=canvasHeader(ctx,s,W,P,'REPORTE DEL MES');
+  ctx.fillStyle='#0d2b3e'; ctx.font=F('800',21); ctx.fillText(titulo,P,y); y+=26;
+  const colW=(cw-16)/2;
+  const caja=(x,cy,lbl,val,bg,fg)=>{ rRect(ctx,x,cy,colW,76,14); ctx.fillStyle=bg; ctx.fill();
+    ctx.fillStyle=fg; ctx.font=F('700',12); ctx.fillText(lbl,x+16,cy+26);
+    ctx.font=F('800',24); ctx.fillText(val,x+16,cy+58); };
+  caja(P,     y, 'COBRADO',        money(cobrado),  '#eafaf1', '#177a41');
+  caja(P+colW+16, y, 'GASTOS',     money(gastos),   '#fdeeee', '#b23a3a');
+  y+=88;
+  caja(P,     y, 'UTILIDAD',       money(utilidad), utilidad>=0?'#e8f7fa':'#fdeeee', utilidad>=0?'#0f7c8c':'#b23a3a');
+  caja(P+colW+16, y, 'POR COBRAR', money(porCobrar),'#fdf3e4', '#a3610f');
+  y+=88+12;
+  ctx.fillStyle='#25373f'; ctx.font=F('400',14);
+  ctx.fillText('Cotizaciones del mes: '+nCot+'    ·    Ventas e instalaciones: '+nVend, P, y); y+=30;
+  if(top.length){
+    ctx.fillStyle='#16899c'; ctx.font=F('700',12); ctx.fillText('EQUIPOS MÁS VENDIDOS', P, y); y+=22;
+    ctx.font=F('400',13.5);
+    for(const [nom,cant] of top){
+      ctx.fillStyle='#25373f'; ctx.fillText('• '+nom, P, y);
+      ctx.textAlign='right'; ctx.fillStyle='#0f7c8c'; ctx.font=F('700',13.5);
+      ctx.fillText(cant+' pza'+(cant>1?'s':''), W-P, y); ctx.textAlign='left'; ctx.font=F('400',13.5);
+      y+=26;
+    }
+    y+=8;
+  }
+  rRect(ctx,P,y,cw,46,12); ctx.fillStyle='#f4fafb'; ctx.fill();
+  ctx.textAlign='center'; ctx.fillStyle='#3a4c54'; ctx.font=F('400',12);
+  ctx.fillText('Generado el '+fmtFecha(todayISO())+' con MG Cotizador', W/2, y+28); ctx.textAlign='left';
+  return canvas;
+}
+async function sendReporte(){
+  toast('Generando reporte...');
+  const now=new Date();
+  try{ await shareImage(reporteCanvas(), 'Reporte-'+now.toISOString().slice(0,7)+'.png', 'Reporte del mes de '+DB.settings.empresa+'.'); }
+  catch(e){ toast('No se pudo crear el reporte'); }
+}
+
 /* ============================================================
    REUSAR CLIENTES
    ============================================================ */
@@ -1591,7 +1767,7 @@ function renderPay(){
   $('#pay-cliente').textContent=q.cliente.nombre+' — Total del trabajo: '+money(q.total);
   const p=pagosDe(q);
   $('#pay-lista').innerHTML = p.length
-    ? p.map(x=>`<div class="pay-row"><span>${fmtFecha(x.fecha)}${x.nota?' · '+x.nota:''}</span><span style="display:flex;align-items:center;gap:8px"><b>${money(x.monto)}</b><button class="icon-btn del" style="width:32px;height:32px" onclick="delPago('${x.id}')" title="Eliminar pago">${TRASH_SVG}</button></span></div>`).join('')
+    ? p.map(x=>`<div class="pay-row"><span>${fmtFecha(x.fecha)}${x.nota?' · '+x.nota:''}</span><span style="display:flex;align-items:center;gap:8px"><b>${money(x.monto)}</b><button class="icon-btn" style="width:32px;height:32px;color:#25d366" onclick="sendRecibo('${q.id}','${x.id}')" title="Enviar recibo por WhatsApp">${WA_SVG}</button><button class="icon-btn del" style="width:32px;height:32px" onclick="delPago('${x.id}')" title="Eliminar pago">${TRASH_SVG}</button></span></div>`).join('')
     : '<div class="hint">Sin pagos registrados. Ojo: si no registras pagos y la marcas Vendida/Instalada, se considera pagada completa.</div>';
   const cob=p.reduce((s,x)=>s+(+x.monto||0),0);
   $('#pay-resumen').innerHTML=`
@@ -1807,17 +1983,27 @@ async function removePin(){
 /* ============================================================
    TEMA (claro / oscuro) — se guarda por dispositivo
    ============================================================ */
-function applyTheme(t){
+function resolveTheme(pref){
+  return pref==='auto' ? (matchMedia('(prefers-color-scheme: light)').matches?'light':'dark') : pref;
+}
+function applyTheme(pref){
+  const t=resolveTheme(pref);
   document.documentElement.dataset.theme=t;
-  document.querySelectorAll('#themeSeg button').forEach(b=>b.classList.toggle('active', b.dataset.themeOpt===t));
+  document.querySelectorAll('#themeSeg button').forEach(b=>b.classList.toggle('active', b.dataset.themeOpt===pref));
   const meta=document.querySelector('meta[name="theme-color"]');
   if(meta) meta.content = t==='light' ? '#e7f2f5' : '#04060a';
 }
-function setTheme(t){
-  localStorage.setItem('mgcot_theme',t);
-  applyTheme(t);
-  toast(t==='light' ? 'Tema claro ✓' : 'Tema oscuro ✓');
+function setTheme(pref){
+  localStorage.setItem('mgcot_theme',pref);
+  applyTheme(pref);
+  toast(pref==='auto' ? 'Tema automático ✓ (sigue a tu sistema)' : (pref==='light' ? 'Tema claro ✓' : 'Tema oscuro ✓'));
 }
+/* si el sistema cambia de modo y el tema está en Auto, actualizar al momento */
+try{
+  matchMedia('(prefers-color-scheme: light)').addEventListener('change',()=>{
+    if((localStorage.getItem('mgcot_theme')||'dark')==='auto') applyTheme('auto');
+  });
+}catch(e){}
 
 /* ============================================================
    INICIO
@@ -1827,6 +2013,8 @@ loadSettings();
 populateClientes();
 resetForm();
 renderPanel();
+renderBackupInfo();
+setTimeout(autoBackupCheck, 2500);
 
 // Bloqueo: si no hay clave, pedir crearla; si hay, pedirla (una vez por sesión)
 (function initLock(){
