@@ -439,6 +439,7 @@ document.documentElement.dataset.theme=t;})();</script>
         <button data-view="panel" class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>Panel</button>
         <button data-view="cotizar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Nueva cotización</button>
         <button data-view="historial"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l3 3"/></svg>Historial</button>
+        <button data-view="clientes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>Clientes</button>
         <button data-view="agenda"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Agenda</button>
         <button data-view="gastos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 7h20v14H2zM16 3l-4 4-4-4"/><path d="M12 12v5M9.5 13.5h5"/></svg>Gastos</button>
         <button data-view="inventario"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 8v13H3V8M1 3h22v5H1zM10 12h4"/></svg>Inventario</button>
@@ -649,7 +650,32 @@ document.documentElement.dataset.theme=t;})();</script>
       </div>
       <div class="field" style="margin-top:14px"><label>Producto</label>
         <select id="i_prod"></select>
-        <div class="hint">¿No aparece en la lista? Agrégalo primero en <a href="#" onclick="go('catalogo');return false" style="color:var(--accent)">Catálogo</a>.</div>
+        <div class="hint">¿No aparece en la lista? <a href="#" onclick="toggleNuevoProd(true);return false" style="color:var(--accent)">Créalo aquí mismo</a> o revísalo en <a href="#" onclick="go('catalogo');return false" style="color:var(--accent)">Catálogo</a>.</div>
+      </div>
+      <div id="np_panel" style="display:none;margin-top:12px;padding:14px;border:1px dashed rgba(255,255,255,.18);border-radius:14px">
+        <div style="font-weight:800;margin-bottom:4px">Producto nuevo</div>
+        <div class="sub" style="margin-bottom:10px">Se agrega al almacén y también a tu catálogo, para que lo puedas cotizar.</div>
+        <div class="grid g3">
+          <div class="field"><label>Nombre</label><input id="np_nombre" placeholder="Ej. Minisplit 1 TR 220V"></div>
+          <div class="field"><label>Tipo</label>
+            <select id="np_tipo" onchange="npTipoChange()">
+              <option value="eq">Equipo</option>
+              <option value="mat">Material / consumible</option>
+            </select>
+          </div>
+          <div class="field" id="np_u_f" style="display:none"><label>Se vende por</label>
+            <select id="np_u"><option value="pza">pieza</option><option value="m">metro</option></select>
+          </div>
+        </div>
+        <div class="grid g3" style="margin-top:12px">
+          <div class="field"><label>Precio de venta ($)</label><input id="np_precio" type="number" min="0" placeholder="0"><div class="hint">Lo que le cobras al cliente</div></div>
+          <div class="field"><label>Existencia inicial</label><input id="np_stock" type="number" min="0" step="0.5" placeholder="0"><div class="hint">Cuántos tienes ahorita</div></div>
+          <div class="field"><label>Mínimo para avisarte</label><input id="np_min" type="number" min="0" step="0.5" placeholder="0"></div>
+        </div>
+        <div class="btn-row" style="margin-top:14px">
+          <button class="btn btn-primary btn-sm" onclick="crearProdInv()">Crear producto</button>
+          <button class="btn btn-ghost btn-sm" onclick="toggleNuevoProd(false)">Cancelar</button>
+        </div>
       </div>
       <div class="grid g3" style="margin-top:12px">
         <div class="field"><label>Cantidad</label><input id="i_cant" type="number" min="0" step="0.5" placeholder="0"></div>
@@ -669,9 +695,12 @@ document.documentElement.dataset.theme=t;})();</script>
         <div><h2>Lo que tengo en almacén</h2><div class="sub" id="inv-resumen">Aún no registras existencias.</div></div>
         <button class="btn btn-ghost btn-sm" onclick="exportInvCSV()">📊 Exportar a Excel</button>
       </div>
-      <div class="field" style="max-width:340px;margin-bottom:6px"><input id="i_buscar" placeholder="Buscar producto..." oninput="renderInv()"></div>
+      <div style="display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap;margin-bottom:6px">
+        <div class="field" style="flex:1;min-width:200px;max-width:340px;margin:0"><input id="i_buscar" placeholder="Buscar producto..." oninput="renderInv()"></div>
+        <button class="btn btn-ghost btn-sm" onclick="toggleNuevoProd(true)">+ Agregar producto</button>
+      </div>
       <div class="tbl-wrap"><div id="invTable"></div></div>
-      <div class="hint" style="margin-top:12px">Puedes escribir directo sobre la existencia, el mínimo o el costo. El <strong>mínimo</strong> es la cantidad a partir de la cual te aviso que hay que reponer.</div>
+      <div class="hint" style="margin-top:12px">Puedes escribir directo sobre la existencia, el mínimo o el costo. El <strong>mínimo</strong> es la cantidad a partir de la cual te aviso que hay que reponer.<br><br>En cada renglón: 📤 <strong>saca el producto del almacén</strong> (dejo de llevarte la existencia, pero lo sigues cotizando) y 🗑️ lo <strong>elimina por completo</strong> (también del catálogo).</div>
     </div>
 
     <div class="card">
@@ -680,6 +709,33 @@ document.documentElement.dataset.theme=t;})();</script>
         <button class="btn btn-ghost btn-sm" onclick="limpiarMovs()">Limpiar historial</button>
       </div>
       <div class="tbl-wrap"><div id="movTable"></div></div>
+    </div>
+  </section>
+
+  <!-- ============ CARTERA DE CLIENTES ============ -->
+  <section id="view-clientes" class="view">
+    <div class="card">
+      <div class="row-between">
+        <div><h2><svg viewBox="0 0 24 24" width="22" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>Cartera de clientes</h2><div class="sub" id="cli-resumen">Todos tus clientes, cuánto te han dejado y qué equipos les has vendido.</div></div>
+        <button class="btn btn-ghost btn-sm" onclick="exportClientesCSV()">📊 Exportar a Excel</button>
+      </div>
+      <div style="display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap;margin-bottom:6px">
+        <div class="field" style="flex:1;min-width:190px;max-width:340px;margin:0"><input id="cli_buscar" placeholder="Buscar cliente, teléfono o correo..." oninput="renderClientes()"></div>
+        <div class="field" style="min-width:190px;max-width:250px;margin:0">
+          <select id="cli_orden" onchange="renderClientes()">
+            <option value="total">Los que más han gastado</option>
+            <option value="reciente">Movimiento más reciente</option>
+            <option value="saldo">Los que más deben</option>
+            <option value="nombre">Nombre (A–Z)</option>
+          </select>
+        </div>
+      </div>
+      <div class="tbl-wrap"><div id="cliTable"></div></div>
+      <div class="hint" style="margin-top:12px">Toca un cliente para ver todo lo que te ha comprado o instalado, su historial y sus saldos.</div>
+    </div>
+
+    <div class="card" id="cli-detalle-card" style="display:none">
+      <div id="cliDetalle"></div>
     </div>
   </section>
 
@@ -965,6 +1021,7 @@ function go(view){
   window.scrollTo({top:0,behavior:'smooth'});
   if(view==='panel') renderPanel();
   if(view==='historial') renderHist();
+  if(view==='clientes') renderClientes();
   if(view==='catalogo') renderCatalog();
   if(view==='recordatorios') renderReminders();
   if(view==='cotizar') populateClientes();
@@ -1820,6 +1877,7 @@ function renderPanelReminders(){
 /* ============================================================
    PAGOS: modal de anticipos y saldo
    ============================================================ */
+const OUTBOX_SVG='<svg viewBox="0 0 24 24" width="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13v7h18v-7M12 16V3M8 7l4-4 4 4"/></svg>';
 const TRASH_SVG='<svg viewBox="0 0 24 24" width="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M8 6V4h8v2m1 0v14H7V6"/></svg>';
 let payId=null;
 function saldoTag(q){
@@ -1928,6 +1986,172 @@ function renderGastos(){
   }</tbody></table>`;
 }
 
+
+/* ============================================================
+   CARTERA DE CLIENTES
+   Se arma sola con las cotizaciones: agrupa por nombre de cliente
+   y suma totales, cobros, saldos y los productos de cada uno.
+   ============================================================ */
+const CLI_CERRADOS = ['Vendida','Instalada'];
+let cliSel=null, cliCache=[];
+
+function cliKey(n){ return (n||'').trim().toLowerCase(); }
+
+function carteraDatos(){
+  const map=new Map();
+  DB.quotes.forEach(q=>{
+    const nombre=((q.cliente&&q.cliente.nombre)||'').trim();
+    if(!nombre) return;
+    const k=cliKey(nombre);
+    let c=map.get(k);
+    if(!c){ c={key:k, nombre, tel:'', dir:'', correo:'', quotes:[], total:0, cobrado:0, saldo:0, cerradas:0, canceladas:0, ultima:''}; map.set(k,c); }
+    if(!c.tel && q.cliente.tel) c.tel=q.cliente.tel;
+    if(!c.dir && q.cliente.dir) c.dir=q.cliente.dir;
+    if(!c.correo && q.cliente.correo) c.correo=q.cliente.correo;
+    c.quotes.push(q);
+    if(q.estado==='Cancelada'){ c.canceladas++; }
+    else{
+      c.total   += +q.total||0;
+      c.cobrado += cobradoDe(q);
+      c.saldo   += saldoDe(q);
+      if(CLI_CERRADOS.indexOf(q.estado)>-1) c.cerradas++;
+    }
+    const f=q.fechaTrabajo||q.fecha||'';
+    if(f>c.ultima) c.ultima=f;
+  });
+  return [...map.values()];
+}
+
+/* Lo que el cliente ha comprado o instalado, sumando todas sus cotizaciones no canceladas */
+function cliProductos(c){
+  const map=new Map();
+  const sumar=(nombre,cant,u,imp)=>{
+    if(!nombre) return;
+    const k=nombre.toLowerCase();
+    let r=map.get(k);
+    if(!r){ r={nombre, cant:0, u, veces:0, imp:0}; map.set(k,r); }
+    r.cant=num2(r.cant+cant); r.veces++; r.imp+=(+imp||0);
+  };
+  c.quotes.forEach(q=>{
+    if(q.estado==='Cancelada') return;
+    (q.equipos||[]).forEach(e=>sumar(e.nombre, +e.cant||0, 'pza', e.imp!=null?e.imp:(+e.cant||0)*(+e.precio||0)));
+    (q.materiales||[]).forEach(m=>sumar(m.nombre, +m.metros||0, m.u||'m', m.imp!=null?m.imp:(+m.metros||0)*(+m.precio||0)));
+  });
+  return [...map.values()].sort((a,b)=>b.imp-a.imp);
+}
+
+function verCliente(i){
+  const c=cliCache[i]; if(!c) return;
+  cliSel = (cliSel===c.key) ? null : c.key;
+  renderClientes();
+  if(cliSel) setTimeout(()=>{ const d=$('#cli-detalle-card'); if(d) d.scrollIntoView({behavior:'smooth',block:'start'}); },80);
+}
+
+function renderClientes(){
+  const todos=carteraDatos();
+  const busca=($('#cli_buscar').value||'').toLowerCase().trim();
+  const orden=$('#cli_orden').value||'total';
+
+  const totalCartera=todos.reduce((s,c)=>s+c.total,0);
+  const saldoCartera=todos.reduce((s,c)=>s+c.saldo,0);
+  $('#cli-resumen').textContent = todos.length
+    ? todos.length+' cliente'+(todos.length>1?'s':'')+' · '+money(totalCartera)+' facturado'+(saldoCartera>0?' · '+money(saldoCartera)+' por cobrar':'')
+    : 'Aún no tienes clientes registrados.';
+
+  let list=todos.filter(c=>!busca
+    || c.nombre.toLowerCase().includes(busca)
+    || (c.tel||'').toLowerCase().includes(busca)
+    || (c.correo||'').toLowerCase().includes(busca));
+
+  if(orden==='nombre')        list.sort((a,b)=>a.nombre.localeCompare(b.nombre,'es'));
+  else if(orden==='reciente') list.sort((a,b)=>(b.ultima||'').localeCompare(a.ultima||''));
+  else if(orden==='saldo')    list.sort((a,b)=>b.saldo-a.saldo);
+  else                        list.sort((a,b)=>b.total-a.total);
+  cliCache=list;
+
+  const cont=$('#cliTable');
+  if(!todos.length){
+    cont.innerHTML=emptyMsg('Todavía no hay clientes','En cuanto hagas tu primera cotización, el cliente aparece aquí solo.');
+  }else if(!list.length){
+    cont.innerHTML=emptyMsg('Sin resultados','Prueba con otro nombre, teléfono o correo.');
+  }else{
+    cont.innerHTML=`<table style="min-width:720px"><thead><tr>
+      <th>Cliente</th><th style="width:110px">Ventas</th>
+      <th style="text-align:right;width:130px">Total</th>
+      <th style="text-align:right;width:130px">Cobrado</th>
+      <th style="text-align:right;width:130px">Saldo</th>
+      <th style="width:120px">Último</th></tr></thead><tbody>${
+      list.map((c,i)=>{
+        const abierto = cliSel===c.key;
+        return `<tr onclick="verCliente(${i})" style="cursor:pointer${abierto?';background:rgba(255,255,255,.05)':''}">
+          <td><strong>${esc(c.nombre)}</strong>${c.tel?`<br><span class="hint">${esc(c.tel)}</span>`:''}</td>
+          <td>${c.quotes.length} cotiz.${c.cerradas?`<br><span class="hint">${c.cerradas} cerrad${c.cerradas>1?'as':'a'}</span>`:''}</td>
+          <td style="text-align:right;font-weight:700">${money(c.total)}</td>
+          <td style="text-align:right">${money(c.cobrado)}</td>
+          <td style="text-align:right;font-weight:700;color:${c.saldo>0?'var(--amber)':'var(--dim)'}">${money(c.saldo)}</td>
+          <td><span class="hint">${c.ultima?fmtFecha(c.ultima):'—'}</span></td>
+        </tr>`;
+      }).join('')
+    }</tbody></table>`;
+  }
+
+  const card=$('#cli-detalle-card'), det=$('#cliDetalle');
+  const c = cliSel ? todos.find(x=>x.key===cliSel) : null;
+  if(!c){ card.style.display='none'; det.innerHTML=''; return; }
+  card.style.display='';
+
+  const prods=cliProductos(c);
+  const hist=[...c.quotes].sort((a,b)=>((b.fechaTrabajo||b.fecha||'')).localeCompare(a.fechaTrabajo||a.fecha||''));
+  const contacto=[
+    c.tel    ? `<a href="${waLink(c.tel,'Hola '+c.nombre+',')}" target="_blank" style="color:var(--accent)">${esc(c.tel)}</a>` : '',
+    c.correo ? esc(c.correo) : '',
+    c.dir    ? esc(c.dir) : ''
+  ].filter(Boolean).join(' · ') || '<span class="hint">Sin datos de contacto guardados</span>';
+
+  det.innerHTML=`
+    <div class="row-between">
+      <div><h2>${esc(c.nombre)}</h2><div class="sub" style="margin-bottom:0">${contacto}</div></div>
+      <button class="btn btn-ghost btn-sm" onclick="cliSel=null;renderClientes()">Cerrar</button>
+    </div>
+
+    <div class="stats" style="margin-top:16px">
+      ${statCard('linear-gradient(135deg,var(--cyan),var(--teal))', money(c.total), 'Facturado en total','M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6')}
+      ${statCard('linear-gradient(135deg,var(--green),#0f7a3d)', money(c.cobrado), 'Ya cobrado','M20 6L9 17l-5-5')}
+      ${statCard('linear-gradient(135deg,'+(c.saldo>0?'var(--amber),#d97a1c':'var(--navy),#1a4b63')+')', money(c.saldo), 'Saldo pendiente','M12 8v4l3 3M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z')}
+    </div>
+
+    <div class="sec-title">Lo que te ha comprado o instalado</div>
+    ${prods.length ? `<div class="tbl-wrap"><table><thead><tr><th>Producto</th><th style="text-align:right;width:110px">Cantidad</th><th style="text-align:right;width:90px">Veces</th><th style="text-align:right;width:130px">Importe</th></tr></thead><tbody>${
+      prods.map(p=>`<tr>
+        <td>${esc(p.nombre)}</td>
+        <td style="text-align:right;font-weight:700">${p.cant} ${p.u==='pza'?'pza':'m'}</td>
+        <td style="text-align:right"><span class="hint">${p.veces}</span></td>
+        <td style="text-align:right;font-weight:700">${money(p.imp)}</td>
+      </tr>`).join('')
+    }</tbody></table></div>` : '<div class="hint">Este cliente todavía no tiene productos en cotizaciones activas.</div>'}
+
+    <div class="sec-title">Su historial</div>
+    <div class="tbl-wrap"><table><thead><tr><th>Folio</th><th style="width:120px">Fecha</th><th style="text-align:right;width:130px">Total</th><th style="text-align:right;width:130px">Saldo</th><th style="width:120px">Estado</th></tr></thead><tbody>${
+      hist.map(q=>`<tr onclick="openPrint('${q.id}')" style="cursor:pointer">
+        <td><strong>${esc(q.folio)}</strong></td>
+        <td><span class="hint">${fmtFecha(q.fechaTrabajo||q.fecha)}</span></td>
+        <td style="text-align:right;font-weight:700">${money(q.total)}</td>
+        <td style="text-align:right;color:${saldoDe(q)>0?'var(--amber)':'var(--dim)'}">${money(saldoDe(q))}</td>
+        <td><span class="badge ${badgeClass[q.estado]||''}">${q.estado}</span></td>
+      </tr>`).join('')
+    }</tbody></table></div>
+    <div class="hint" style="margin-top:10px">Toca cualquier folio para abrirlo, imprimirlo o mandarlo por WhatsApp.</div>`;
+}
+
+function exportClientesCSV(){
+  const filas=[['Cliente','Teléfono','Correo','Dirección','Cotizaciones','Ventas cerradas','Facturado','Cobrado','Saldo','Último movimiento']];
+  carteraDatos().sort((a,b)=>b.total-a.total).forEach(c=>filas.push([
+    c.nombre, c.tel||'', c.correo||'', c.dir||'', c.quotes.length, c.cerradas,
+    num2(c.total), num2(c.cobrado), num2(c.saldo), c.ultima||''
+  ]));
+  downloadCSV('mg-climas-clientes-'+todayISO()+'.csv', filas);
+}
+
 /* ============================================================
    INVENTARIO (existencias de equipos y materiales)
    El stock vive dentro del catálogo: cada equipo/material puede tener
@@ -1968,6 +2192,30 @@ function invOptions(){
   return `<optgroup label="Equipos">${DB.equipos.map(e=>o(e.n)).join('')}</optgroup>`
        + `<optgroup label="Materiales">${DB.materiales.map(m=>o(m.n)).join('')}</optgroup>`;
 }
+/* ---------- Crear producto nuevo desde el almacén ---------- */
+function toggleNuevoProd(v){
+  const p=$('#np_panel'); if(!p) return;
+  p.style.display = v ? '' : 'none';
+  if(v){ npTipoChange(); p.scrollIntoView({behavior:'smooth',block:'center'}); setTimeout(()=>$('#np_nombre').focus(),300); }
+  else { ['#np_nombre','#np_precio','#np_stock','#np_min'].forEach(id=>{ const el=$(id); if(el) el.value=''; }); }
+}
+function npTipoChange(){ $('#np_u_f').style.display = $('#np_tipo').value==='mat' ? '' : 'none'; }
+function crearProdInv(){
+  const n=$('#np_nombre').value.trim();
+  if(!n){ toast('Escribe el nombre del producto'); $('#np_nombre').focus(); return; }
+  if(invBuscar(n)){ toast('Ya tienes un producto con ese nombre'); $('#np_nombre').focus(); return; }
+  const tipo=$('#np_tipo').value;
+  const stock=num2($('#np_stock').value||0);
+  const it={ n, p:+$('#np_precio').value||0, stock, min:num2($('#np_min').value||0), costo:0 };
+  if(tipo==='mat'){ it.u=$('#np_u').value||'pza'; DB.materiales.push(it); }
+  else DB.equipos.push(it);
+  if(stock>0) addMov({nombre:n, cant:stock, tipo:'entrada', nota:'Alta de producto nuevo'});
+  save(); toggleNuevoProd(false); renderInv();
+  const sel=$('#i_prod'); if(sel) sel.value=n;
+  if($('#catTable')) renderCatalog();
+  toast('Producto creado ✓');
+}
+
 function addMovInv(){
   const nombre=$('#i_prod').value, cant=+$('#i_cant').value||0;
   if(!nombre){ toast('Elige un producto'); return; }
@@ -2014,6 +2262,15 @@ function invQuitar(clase,i){
   delete it.stock; delete it.min; delete it.costo;
   save(); renderInv(); toast('Producto fuera del inventario');
 }
+function invEliminarProducto(clase,i){
+  const arr = (clase==='eq'?DB.equipos:DB.materiales);
+  const it=arr[i]; if(!it) return;
+  if(!confirm('¿Eliminar "'+it.n+'" por completo?\n\nDesaparece del almacén Y del catálogo, así que ya no lo vas a poder cotizar.\n\nTus cotizaciones y ventas anteriores no se modifican.\n\nEsto no se puede deshacer.')) return;
+  arr.splice(i,1);
+  save(); renderInv();
+  if($('#catTable')) renderCatalog();
+  toast('Producto eliminado');
+}
 function limpiarMovs(){
   if(!DB.movs.length) return;
   if(confirm('¿Borrar el historial de movimientos?\n\nTus existencias NO cambian, solo se borra la lista de entradas y salidas.')){
@@ -2037,10 +2294,10 @@ function renderInv(){
   const busca=($('#i_buscar').value||'').toLowerCase();
   const list=todos.filter(r=>!busca||r.n.toLowerCase().includes(busca));
   const cont=$('#invTable');
-  if(!todos.length){ cont.innerHTML=emptyMsg('Tu almacén está vacío','Registra una entrada aquí arriba y el producto aparecerá en esta lista.'); }
+  if(!todos.length){ cont.innerHTML=emptyMsg('Tu almacén está vacío','Usa \"+ Agregar producto\" para dar de alta uno nuevo, o registra una entrada aquí arriba.'); }
   else if(!list.length){ cont.innerHTML=emptyMsg('Sin resultados','Prueba con otro nombre.'); }
   else{
-    cont.innerHTML=`<table style="min-width:640px"><thead><tr><th>Producto</th><th style="width:190px">Existencia</th><th style="width:110px">Mínimo</th><th style="width:130px">Costo c/u</th><th style="text-align:right;width:110px">Valor</th><th style="width:44px"></th></tr></thead><tbody>${
+    cont.innerHTML=`<table style="min-width:700px"><thead><tr><th>Producto</th><th style="width:190px">Existencia</th><th style="width:110px">Mínimo</th><th style="width:130px">Costo c/u</th><th style="text-align:right;width:110px">Valor</th><th style="width:96px"></th></tr></thead><tbody>${
       list.map(r=>{
         const st=num2(r.it.stock);
         const color = st<0 ? 'var(--red)' : (invBajo(r) ? 'var(--amber)' : 'var(--text)');
@@ -2056,7 +2313,7 @@ function renderInv(){
           <td><input type="number" min="0" step="0.5" value="${+r.it.min||0}" style="text-align:center;padding:8px 4px" onchange="invEdit('${r.clase}',${r.i},'min',this.value)"></td>
           <td><input type="number" min="0" value="${+r.it.costo||0}" style="text-align:right;padding:8px 6px" onchange="invEdit('${r.clase}',${r.i},'costo',this.value)"></td>
           <td style="text-align:right;font-weight:700">${money(st*(+r.it.costo||0))}</td>
-          <td style="text-align:right"><button class="icon-btn del" title="Sacar del inventario" onclick="invQuitar('${r.clase}',${r.i})">${TRASH_SVG}</button></td>
+          <td style="text-align:right;white-space:nowrap"><button class="icon-btn" title="Sacar del almacén (sigue en el catálogo)" onclick="invQuitar('${r.clase}',${r.i})">${OUTBOX_SVG}</button> <button class="icon-btn del" title="Eliminar el producto por completo" onclick="invEliminarProducto('${r.clase}',${r.i})">${TRASH_SVG}</button></td>
         </tr>`;
       }).join('')
     }</tbody></table>`;
