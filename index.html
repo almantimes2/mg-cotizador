@@ -308,8 +308,20 @@ document.documentElement.dataset.theme=t;})();</script>
   #avisarModal{position:fixed;inset:0;background:rgba(0,0,0,.72);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);z-index:160;display:none;
     align-items:flex-start;justify-content:center;padding:24px;overflow:auto}
   #avisarModal.show{display:flex}
-  #avisarModal .modal-card{max-width:620px}
-  #avisarModal .modal-body{padding:18px;color:var(--ink)}
+  #trabajoModal{position:fixed;inset:0;background:rgba(0,0,0,.72);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);z-index:160;display:none;
+    align-items:flex-start;justify-content:center;padding:24px;overflow:auto}
+  #trabajoModal.show{display:flex}
+  /* La caja blanca es del modal de impresion (es una cotizacion para papel).
+     Estos dos son pantalla, asi que llevan la superficie del tema o el texto
+     claro quedaria sobre blanco. */
+  #trabajoModal .modal-card, #avisarModal .modal-card{max-width:680px;background:#0b1720;border:1px solid var(--vidrio-borde);color:var(--text)}
+  html[data-theme="light"] #trabajoModal .modal-card,
+  html[data-theme="light"] #avisarModal .modal-card{background:#fff;color:var(--text)}
+  #trabajoModal .modal-body{padding:18px}
+  .tr-linea{display:grid;grid-template-columns:1fr 78px 100px 34px;gap:8px;align-items:center;margin-bottom:8px}
+  .tr-linea input,.tr-linea select{margin:0}
+  @media(max-width:560px){ .tr-linea{grid-template-columns:1fr 1fr;} .tr-linea .tr-quitar{grid-column:2;justify-self:end} }
+  #avisarModal .modal-body{padding:18px}
   /* Banda de avisos de mantenimiento */
   #avisos{margin:0 0 16px}
   .aviso{border-radius:16px;padding:16px 18px;border:1px solid rgba(232,155,60,.45);
@@ -952,6 +964,41 @@ document.documentElement.dataset.theme=t;})();</script>
 </div>
 
 <div id="toast"></div>
+
+<!-- Registrar un trabajo ya hecho, sin volver a cotizarlo -->
+<div id="trabajoModal">
+  <div class="modal-card">
+    <div class="modal-bar">
+      <strong>Registrar compra o instalación</strong>
+      <button class="btn btn-ghost btn-sm" onclick="cerrarTrabajo()">Cerrar</button>
+    </div>
+    <div class="modal-body">
+      <div class="sub" style="margin-top:0">Para trabajos que ya hiciste y no cotizaste por aquí. Entra al historial del cliente y suma a lo facturado.</div>
+      <div class="grid g2">
+        <div class="field"><label>Cliente</label><input id="tr_cliente" readonly></div>
+        <div class="field"><label>Fecha del trabajo</label><input id="tr_fecha" type="date"></div>
+      </div>
+
+      <div class="sec-title">¿Qué le vendiste o instalaste?</div>
+      <div id="tr_lineas"></div>
+      <button class="btn btn-ghost btn-sm" onclick="trAgregarLinea()">+ Agregar renglón</button>
+
+      <div class="grid g2" style="margin-top:16px">
+        <div class="field"><label>Total del trabajo</label><input id="tr_total" type="number" step="0.01" min="0" oninput="this.dataset.manual='1'"><div class="hint">Se calcula solo, pero lo puedes ajustar.</div></div>
+        <div class="field"><label>¿Cuánto te pagó?</label><input id="tr_cobrado" type="number" step="0.01" min="0"><div class="hint">Déjalo igual al total si ya te liquidó.</div></div>
+      </div>
+      <div class="field"><label>Nota (opcional)</label><input id="tr_nota" placeholder="Ej. Instalación en recámara principal"></div>
+      <label class="hint" style="display:flex;gap:8px;align-items:flex-start;margin:12px 0">
+        <input type="checkbox" id="tr_inv" style="width:auto;margin-top:3px">
+        <span>Descontar del inventario. Déjalo apagado si el material ya salió del almacén cuando hiciste el trabajo.</span>
+      </label>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="guardarTrabajo()">Guardar trabajo</button>
+        <button class="btn btn-ghost" onclick="cerrarTrabajo()">Cancelar</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- Avisar mantenimientos por WhatsApp, uno por toque -->
 <div id="avisarModal">
@@ -2348,6 +2395,7 @@ function renderClientes(){
     <div class="row-between">
       <div><h2>${esc(c.nombre)}</h2><div class="sub" style="margin-bottom:0">${contacto}</div></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-primary btn-sm" onclick="abrirTrabajo('${escAttr(c.key)}')">+ Registrar compra o instalación</button>
         <button class="btn btn-ghost btn-sm" onclick="cliEditar('${escAttr(c.key)}')">Editar datos</button>
         ${c.quotes.length ? '' : `<button class="btn btn-ghost btn-sm" onclick="cliEliminar('${escAttr(c.key)}')">Eliminar</button>`}
         <button class="btn btn-ghost btn-sm" onclick="cliSel=null;renderClientes()">Cerrar</button>
@@ -2368,12 +2416,12 @@ function renderClientes(){
         <td style="text-align:right"><span class="hint">${p.veces}</span></td>
         <td style="text-align:right;font-weight:700">${money(p.imp)}</td>
       </tr>`).join('')
-    }</tbody></table></div>` : '<div class="hint">Este cliente todavía no tiene productos en cotizaciones activas.</div>'}
+    }</tbody></table></div>` : `<div class="hint">Todavía no hay nada registrado. Si ya le vendiste o instalaste algo, usa <strong>+ Registrar compra o instalación</strong> y aparece aquí.</div>`}
 
     <div class="sec-title">Su historial</div>
     <div class="tbl-wrap"><table><thead><tr><th>Folio</th><th style="width:120px">Fecha</th><th style="text-align:right;width:130px">Total</th><th style="text-align:right;width:130px">Saldo</th><th style="width:120px">Estado</th></tr></thead><tbody>${
       hist.map(q=>`<tr onclick="openPrint('${q.id}')" style="cursor:pointer">
-        <td><strong>${esc(q.folio)}</strong></td>
+        <td><strong>${esc(q.folio)}</strong>${q.registro?'<br><span class="hint">Registrado</span>':''}</td>
         <td><span class="hint">${fmtFecha(q.fechaTrabajo||q.fecha)}</span></td>
         <td style="text-align:right;font-weight:700">${money(q.total)}</td>
         <td style="text-align:right;color:${saldoDe(q)>0?'var(--amber)':'var(--dim)'}">${money(saldoDe(q))}</td>
@@ -2443,6 +2491,109 @@ function cliEliminar(key){
   renderClientes();
   populateClientes();
   toast('Cliente eliminado');
+}
+
+/* ---------- Registrar un trabajo ya hecho ----------
+   En vez de inventar un almacen aparte, esto crea una cotizacion normal
+   en estado "Instalada". Asi el facturado, el cobrado, el saldo, los
+   productos, el historial, la agenda y el Excel funcionan sin tocarlos. */
+let trCliente=null;
+
+function abrirTrabajo(key){
+  const c=carteraDatos().find(x=>x.key===key); if(!c) return;
+  trCliente=c;
+  $('#tr_cliente').value=c.nombre;
+  $('#tr_fecha').value=todayISO();
+  $('#tr_nota').value=''; $('#tr_cobrado').value=''; $('#tr_total').value='';
+  $('#tr_inv').checked=false;
+  $('#tr_lineas').innerHTML=''; trAgregarLinea();
+  $('#trabajoModal').classList.add('show');
+}
+function cerrarTrabajo(){ $('#trabajoModal').classList.remove('show'); trCliente=null; }
+
+function trAgregarLinea(){
+  const div=document.createElement('div');
+  div.className='tr-linea';
+  div.innerHTML=`
+    <select class="tr-prod" onchange="trToggleOtro(this)">
+      ${invOptions()}
+      <option value="__otro">Otro (escribir)…</option>
+    </select>
+    <input class="tr-cant" type="number" step="0.01" min="0" value="1" placeholder="Cant." oninput="trTotal()">
+    <input class="tr-precio" type="number" step="0.01" min="0" placeholder="Precio" oninput="trTotal()">
+    <button class="icon-btn del tr-quitar" title="Quitar renglón" onclick="this.closest('.tr-linea').remove();trTotal()">${TRASH_SVG}</button>`;
+  $('#tr_lineas').appendChild(div);
+  trTotal();
+}
+/* "Otro" cambia el select por un campo de texto libre (mano de obra, etc.) */
+function trToggleOtro(sel){
+  if(sel.value!=='__otro') return;
+  const inp=document.createElement('input');
+  inp.className='tr-prod tr-otro'; inp.placeholder='Ej. Mano de obra, instalación…';
+  sel.replaceWith(inp); inp.focus();
+}
+function trLineas(){
+  return [...document.querySelectorAll('#tr_lineas .tr-linea')].map(l=>{
+    const p=l.querySelector('.tr-prod');
+    const nombre=(p.tagName==='SELECT' ? p.value : p.value.trim());
+    const cant=+l.querySelector('.tr-cant').value||0;
+    const precio=+l.querySelector('.tr-precio').value||0;
+    return {nombre, cant, precio, imp:cant*precio};
+  }).filter(x=>x.nombre && x.nombre!=='__otro' && (x.cant>0||x.precio>0));
+}
+function trTotal(){
+  const t=trLineas().reduce((s,x)=>s+x.imp,0);
+  const campo=$('#tr_total');
+  // solo se pisa mientras el usuario no lo haya ajustado a mano
+  if(!campo.dataset.manual) campo.value=t? t.toFixed(2):'';
+}
+
+function guardarTrabajo(){
+  if(!trCliente){ cerrarTrabajo(); return; }
+  const lineas=trLineas();
+  if(!lineas.length){ toast('Agrega al menos un renglón'); return; }
+
+  // cada renglon va al arreglo que le toca, para que la ficha del cliente
+  // lo cuente como equipo, material o servicio igual que una cotizacion
+  const equipos=[], materiales=[], servicios=[];
+  lineas.forEach(x=>{
+    const eq=DB.equipos.find(e=>e.n===x.nombre);
+    const mat=DB.materiales.find(m=>m.n===x.nombre);
+    if(eq)       equipos.push({nombre:x.nombre, cant:x.cant, precio:x.precio, imp:x.imp});
+    else if(mat) materiales.push({nombre:x.nombre, metros:x.cant, precio:x.precio, u:mat.u||'m', imp:x.imp});
+    else if(x.cant>1) equipos.push({nombre:x.nombre, cant:x.cant, precio:x.precio, imp:x.imp});
+    else         servicios.push({nombre:x.nombre, precio:x.imp||x.precio});
+  });
+
+  const calculado=lineas.reduce((s,x)=>s+x.imp,0);
+  const total=+$('#tr_total').value>0 ? +$('#tr_total').value : calculado;
+  const fecha=$('#tr_fecha').value||todayISO();
+  const cobradoTxt=$('#tr_cobrado').value.trim();
+  const cobrado=cobradoTxt===''? total : Math.max(0, Math.min(total, +cobradoTxt||0));
+
+  const q={
+    id:uid(), folio:'REG-'+String(DB.settings.folio).padStart(4,'0'), creado:new Date().toISOString(),
+    registro:true,
+    cliente:{nombre:trCliente.nombre, tel:trCliente.tel||'', dir:trCliente.dir||'', correo:trCliente.correo||''},
+    fecha, fechaTrabajo:fecha, vigencia:'', necesidad:'', notas:$('#tr_nota').value.trim(),
+    equipos, materiales, servicios,
+    desc:0, ivaPct:0, subtotal:total, iva:0, total,
+    estado:'Instalada',
+    // si no se descuenta, se marca como ya aplicado: el material salio del
+    // almacen cuando se hizo el trabajo, no hoy
+    invAplicado: !$('#tr_inv').checked,
+    pagos: cobrado>0 ? [{id:uid(), fecha, monto:cobrado, nota:'Registro de trabajo'}] : []
+  };
+  DB.settings.folio++;
+  DB.quotes.unshift(q);
+
+  let nInv=0;
+  if($('#tr_inv').checked){ q.invAplicado=false; nInv=syncInv(q); }
+
+  save();
+  cerrarTrabajo();
+  renderClientes(); renderHist(); renderPanel(); renderAvisos();
+  toast('Trabajo registrado ✓ '+money(total)+avisoInv(nInv));
 }
 
 function exportClientesCSV(){
