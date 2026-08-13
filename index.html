@@ -305,6 +305,25 @@ document.documentElement.dataset.theme=t;})();</script>
   #printModal{position:fixed;inset:0;background:rgba(0,0,0,.72);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);z-index:150;display:none;
     align-items:flex-start;justify-content:center;padding:24px;overflow:auto}
   #printModal.show{display:flex}
+  #avisarModal{position:fixed;inset:0;background:rgba(0,0,0,.72);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);z-index:160;display:none;
+    align-items:flex-start;justify-content:center;padding:24px;overflow:auto}
+  #avisarModal.show{display:flex}
+  #avisarModal .modal-card{max-width:620px}
+  #avisarModal .modal-body{padding:18px;color:var(--ink)}
+  /* Banda de avisos de mantenimiento */
+  #avisos{margin:0 0 16px}
+  .aviso{border-radius:16px;padding:16px 18px;border:1px solid rgba(232,155,60,.45);
+    background:linear-gradient(135deg,rgba(232,155,60,.16),rgba(232,155,60,.06));
+    display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+  .aviso .ico{width:40px;height:40px;border-radius:12px;flex-shrink:0;display:grid;place-items:center;
+    background:rgba(232,155,60,.22);color:var(--amber)}
+  .aviso .txt{flex:1;min-width:200px}
+  .aviso .txt strong{display:block;font-size:1.02rem}
+  .aviso .acciones{display:flex;gap:8px;flex-wrap:wrap}
+  .av-row{display:flex;gap:12px;align-items:center;justify-content:space-between;
+    padding:11px 0;border-bottom:1px solid var(--line)}
+  .av-row:last-child{border-bottom:0}
+  .av-row.listo{opacity:.45}
   .modal-card{background:#fff;border-radius:18px;max-width:820px;width:100%;box-shadow:0 40px 90px -20px rgba(0,0,0,.8);overflow:hidden}
   .modal-bar{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;background:#0d131b;color:#fff;border-bottom:1px solid rgba(255,255,255,.08)}
   .modal-body{padding:0}
@@ -456,6 +475,8 @@ document.documentElement.dataset.theme=t;})();</script>
 <datalist id="clientes"></datalist>
 
   <!-- ============ PANEL ============ -->
+  <div id="avisos"></div>
+
   <section id="view-panel" class="view active">
     <div class="row-between">
       <div><h2 style="font-size:1.5rem">Resumen del negocio</h2><div class="sub" id="panel-mes"></div></div>
@@ -767,6 +788,17 @@ document.documentElement.dataset.theme=t;})();</script>
         <div class="field"><label>Teléfono</label><input id="r_tel" placeholder="871 000 0000"></div>
         <div class="field"><label>Fecha del servicio</label><input id="r_fecha" type="date"></div>
       </div>
+      <div class="grid g2" style="margin-top:2px">
+        <div class="field"><label>¿Se repite?</label>
+          <select id="r_repetir">
+            <option value="">Solo esta vez</option>
+            <option value="3">Cada 3 meses</option>
+            <option value="6" selected>Cada 6 meses</option>
+            <option value="12">Cada año</option>
+          </select>
+          <div class="hint">Al marcarlo como hecho se agenda solo el siguiente.</div>
+        </div>
+      </div>
       <div class="field" style="margin-top:14px"><label>Nota / tipo de servicio</label>
         <input id="r_nota" placeholder="Escribe o elige un mantenimiento preventivo aquí abajo">
         <div class="presets">
@@ -819,6 +851,14 @@ document.documentElement.dataset.theme=t;})();</script>
         <div class="field"><label>Ciudad / zona</label><input id="s_ciudad"></div>
       </div>
       <div class="field" style="margin-top:12px"><label>Leyenda de garantía / pie de página</label><input id="s_pie"></div>
+      <div class="sec-title">Mantenimientos</div>
+      <div class="grid g2">
+        <div class="field"><label>Repetir mantenimiento cada</label><input id="s_mantMeses" type="number" min="1" max="60" step="1"><div class="hint">Meses. Se usa al marcar un mantenimiento como hecho y al instalar un equipo.</div></div>
+        <div class="field"><label>Agendar solo al instalar</label>
+          <select id="s_autoMant"><option value="1">Sí, agendar automáticamente</option><option value="0">No, lo agendo yo</option></select>
+          <div class="hint">Al pasar una cotización a "Instalada" se agenda su mantenimiento.</div>
+        </div>
+      </div>
       <div class="btn-row"><button class="btn btn-primary" onclick="saveSettings()">Guardar datos</button></div>
     </div>
     <div class="card">
@@ -913,6 +953,17 @@ document.documentElement.dataset.theme=t;})();</script>
 
 <div id="toast"></div>
 
+<!-- Avisar mantenimientos por WhatsApp, uno por toque -->
+<div id="avisarModal">
+  <div class="modal-card">
+    <div class="modal-bar">
+      <strong>Avisar mantenimientos</strong>
+      <button class="btn btn-ghost btn-sm" onclick="cerrarAvisar()">Cerrar</button>
+    </div>
+    <div class="modal-body"><div id="avisarLista"></div></div>
+  </div>
+</div>
+
 <!-- Modal de cotización imprimible -->
 <div id="printModal">
   <div class="modal-card">
@@ -995,7 +1046,8 @@ const DEFAULT_MATERIALES = [
 
 const DEFAULT_SETTINGS = {
   empresa:"MG Climas", tel:"614 513 7488", correo:"", ciudad:"Torreón · Gómez Palacio · Lerdo",
-  pie:"Gracias por su preferencia. Garantía de 1 año en instalación. Precios en pesos mexicanos.", folio:1
+  pie:"Gracias por su preferencia. Garantía de 1 año en instalación. Precios en pesos mexicanos.", folio:1,
+  mantMeses:6, autoMant:true
 };
 
 /* ---------- Estado ---------- */
@@ -1231,7 +1283,17 @@ function renderHist(){
       </td></tr>`).join('')
   }</tbody></table>`;
 }
-function setEstado(id,val){ const q=DB.quotes.find(x=>x.id===id); if(q){q.estado=val; const n=syncInv(q); save(); renderHist(); toast('Estado: '+val+avisoInv(n));} }
+function setEstado(id,val){
+  const q=DB.quotes.find(x=>x.id===id); if(!q) return;
+  q.estado=val;
+  const n=syncInv(q);
+  let mant=null;
+  if(val==='Instalada' && DB.settings.autoMant!==false){
+    mant=agendarMantenimiento(q.cliente&&q.cliente.nombre, q.cliente&&q.cliente.tel);
+  }
+  save(); renderHist(); renderPanelReminders(); renderAvisos();
+  toast('Estado: '+val+avisoInv(n)+(mant?' · Mantenimiento agendado para '+fmtFecha(mant.fecha):''));
+}
 function delQuote(id){ const q=DB.quotes.find(x=>x.id===id); if(confirm('¿Eliminar '+q.folio+' de '+q.cliente.nombre+'? No se puede deshacer.')){ if(q.invAplicado) invDeQuote(q,1); DB.quotes=DB.quotes.filter(x=>x.id!==id); save(); renderHist(); toast('Cotización eliminada'); } }
 function emptyMsg(t,s){ return `<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg><h3>${t}</h3><p>${s}</p></div>`; }
 function fmtFecha(iso){ if(!iso)return'—'; const [y,m,d]=iso.split('-'); return `${d}/${m}/${y}`; }
@@ -1378,10 +1440,14 @@ function resetCatalog(){ if(confirm('¿Restaurar los precios originales de la li
 function loadSettings(){
   $('#s_empresa').value=DB.settings.empresa; $('#s_tel').value=DB.settings.tel;
   $('#s_correo').value=DB.settings.correo; $('#s_ciudad').value=DB.settings.ciudad; $('#s_pie').value=DB.settings.pie;
+  $('#s_mantMeses').value=mantMeses();
+  $('#s_autoMant').value=DB.settings.autoMant===false?'0':'1';
 }
 function saveSettings(){
   DB.settings.empresa=$('#s_empresa').value; DB.settings.tel=$('#s_tel').value;
   DB.settings.correo=$('#s_correo').value; DB.settings.ciudad=$('#s_ciudad').value; DB.settings.pie=$('#s_pie').value;
+  DB.settings.mantMeses = Math.min(60, Math.max(1, parseInt($('#s_mantMeses').value,10)||6));
+  DB.settings.autoMant  = $('#s_autoMant').value==='1';
   save(); toast('Datos guardados ✓');
 }
 function exportData(msg){
@@ -1842,6 +1908,38 @@ function usarEquipo(idx){
 /* ============================================================
    RECORDATORIOS DE SERVICIO
    ============================================================ */
+/* ============================================================
+   MANTENIMIENTOS AUTOMATICOS
+   Sin servidor no hay aviso con la app cerrada, asi que la rueda se
+   sostiene sola: al marcar un mantenimiento como hecho nace el
+   siguiente, y al instalar un equipo se agenda el primero.
+   ============================================================ */
+function mantMeses(){ return Math.min(60, Math.max(1, parseInt(DB.settings.mantMeses,10)||6)); }
+function sumarMeses(iso, m){ const d=new Date(iso+'T12:00:00'); d.setMonth(d.getMonth()+m); return d.toISOString().slice(0,10); }
+
+/* Los que ya se pasaron de fecha y los que caen en los proximos 7 dias. */
+function remPendientes(){
+  const hoy=todayISO(), semana=sumarDias(hoy,7);
+  const pend=DB.reminders.filter(r=>!r.hecho);
+  return {
+    vencidos: pend.filter(r=>r.fecha<hoy).sort((a,b)=>a.fecha.localeCompare(b.fecha)),
+    semana:   pend.filter(r=>r.fecha>=hoy && r.fecha<=semana).sort((a,b)=>a.fecha.localeCompare(b.fecha))
+  };
+}
+function sumarDias(iso,n){ const d=new Date(iso+'T12:00:00'); d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); }
+
+/* Agenda el mantenimiento de un equipo recien instalado. No duplica: si
+   ese cliente ya tiene uno pendiente, se respeta el que ya estaba. */
+function agendarMantenimiento(cliente, tel, meses, nota){
+  const nombre=(cliente||'').trim(); if(!nombre) return null;
+  const k=cliKey(nombre);
+  if(DB.reminders.some(r=>!r.hecho && cliKey(r.cliente)===k)) return null;
+  const r={ id:uid(), cliente:nombre, tel:(tel||'').trim(), fecha:todayPlusMonths(meses||mantMeses()),
+            nota:nota||'Mantenimiento preventivo general', hecho:false, repetir:mantMeses(), auto:true };
+  DB.reminders.push(r);
+  return r;
+}
+
 function todayPlusMonths(m){ const d=new Date(); d.setMonth(d.getMonth()+m); return d.toISOString().slice(0,10); }
 function setNota(btn){ const i=$('#r_nota'); i.value=btn.textContent.trim(); i.focus(); }
 function remSorted(){ return [...DB.reminders].sort((a,b)=>{ if(a.hecho!==b.hecho) return a.hecho?1:-1; return (a.fecha||'').localeCompare(b.fecha||''); }); }
@@ -1850,10 +1948,11 @@ function addReminder(){
   const cliente=$('#r_cliente').value.trim(), fecha=$('#r_fecha').value;
   if(!cliente){ toast('Escribe el nombre del cliente'); return; }
   if(!fecha){ toast('Elige la fecha del servicio'); return; }
-  DB.reminders.push({id:uid(), cliente, tel:$('#r_tel').value.trim(), fecha, nota:$('#r_nota').value.trim(), hecho:false});
+  DB.reminders.push({id:uid(), cliente, tel:$('#r_tel').value.trim(), fecha, nota:$('#r_nota').value.trim(), hecho:false,
+                     repetir: parseInt($('#r_repetir').value,10)||0});
   save();
   $('#r_cliente').value=''; $('#r_tel').value=''; $('#r_fecha').value=''; $('#r_nota').value='';
-  renderReminders(); toast('Recordatorio agendado ✓');
+  renderReminders(); renderPanelReminders(); renderAvisos(); toast('Recordatorio agendado ✓');
 }
 function renderReminders(){
   const cont=$('#remTable'); if(!cont) return;
@@ -1863,10 +1962,11 @@ function renderReminders(){
     remSorted().map(r=>{
       const venc=!r.hecho && r.fecha<hoy;
       const tag = r.hecho?'<span class="badge b-inst">Hecho</span>':(venc?'<span class="badge b-canc">Vencido</span>':'<span class="badge b-vend">Próximo</span>');
+      const rep = r.repetir>0 ? `<br><span class="hint">Se repite cada ${r.repetir} ${r.repetir===1?'mes':'meses'}</span>` : '';
       return `<tr style="${r.hecho?'opacity:.55':''}">
         <td><strong>${fmtFecha(r.fecha)}</strong><br>${tag}</td>
         <td>${r.cliente}${r.tel?`<br><span class="hint">${r.tel}</span>`:''}</td>
-        <td>${r.nota||'—'}</td>
+        <td>${r.nota||'—'}${rep}${r.auto?'<br><span class="hint">Agendado solo</span>':''}</td>
         <td style="text-align:right;white-space:nowrap">
           ${r.tel?`<button class="icon-btn" title="Recordar por WhatsApp" style="color:#25d366" onclick="waRemind('${r.id}')">${WA_SVG}</button>`:''}
           <button class="icon-btn" title="${r.hecho?'Marcar pendiente':'Marcar como hecho'}" onclick="toggleReminder('${r.id}')"><svg viewBox="0 0 24 24" width="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg></button>
@@ -1875,8 +1975,23 @@ function renderReminders(){
     }).join('')
   }</tbody></table>`;
 }
-function toggleReminder(id){ const r=DB.reminders.find(x=>x.id===id); if(r){ r.hecho=!r.hecho; save(); renderReminders(); renderPanelReminders(); } }
-function delReminder(id){ if(confirm('¿Eliminar este recordatorio?')){ DB.reminders=DB.reminders.filter(x=>x.id!==id); save(); renderReminders(); renderPanelReminders(); toast('Recordatorio eliminado'); } }
+function toggleReminder(id){
+  const r=DB.reminders.find(x=>x.id===id); if(!r) return;
+  r.hecho=!r.hecho;
+  // Al cumplirlo nace el siguiente: es lo que evita que el ciclo se rompa
+  // justo cuando el cliente quedo contento.
+  let siguiente=null;
+  if(r.hecho && r.repetir>0 && !r.generado){
+    const base = r.fecha>todayISO() ? r.fecha : todayISO();
+    siguiente = { id:uid(), cliente:r.cliente, tel:r.tel, fecha:sumarMeses(base, r.repetir),
+                  nota:r.nota, hecho:false, repetir:r.repetir, auto:true };
+    DB.reminders.push(siguiente);
+    r.generado=true;
+  }
+  save(); renderReminders(); renderPanelReminders(); renderAvisos();
+  if(siguiente) toast('Hecho ✓ — siguiente agendado para '+fmtFecha(siguiente.fecha));
+}
+function delReminder(id){ if(confirm('¿Eliminar este recordatorio?')){ DB.reminders=DB.reminders.filter(x=>x.id!==id); save(); renderReminders(); renderPanelReminders(); renderAvisos(); toast('Recordatorio eliminado'); } }
 function waRemind(id){ const r=DB.reminders.find(x=>x.id===id); if(!r)return; const msg='Hola'+(r.cliente?' '+r.cliente:'')+', le recordamos el servicio de '+DB.settings.empresa+(r.nota?': '+r.nota:'')+'.'; window.open(waLink(r.tel,msg),'_blank'); }
 function agendarDesdeQuote(id){
   const q=DB.quotes.find(x=>x.id===id); if(!q)return;
@@ -1885,6 +2000,91 @@ function agendarDesdeQuote(id){
   $('#r_fecha').value=todayPlusMonths(6); $('#r_nota').value='Mantenimiento / seguimiento';
   toast('Revisa la fecha y presiona Agendar');
 }
+/* ---------- Banda de avisos ---------- */
+function renderAvisos(){
+  const cont=$('#avisos'); if(!cont) return;
+  const {vencidos, semana}=remPendientes();
+  const total=vencidos.length+semana.length;
+  if(!total){ cont.innerHTML=''; return; }
+
+  const partes=[];
+  // <strong> no: dentro de .aviso .txt es display:block y parte la linea
+  if(vencidos.length) partes.push('<span style="color:var(--amber);font-weight:700">'+vencidos.length+' vencido'+(vencidos.length>1?'s':'')+'</span>');
+  if(semana.length)   partes.push(semana.length+' esta semana');
+
+  const pedirPermiso = ('Notification' in window) && Notification.permission==='default';
+
+  cont.innerHTML=`<div class="aviso">
+    <div class="ico"><svg viewBox="0 0 24 24" width="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"/></svg></div>
+    <div class="txt">
+      <strong>${total} mantenimiento${total>1?'s':''} por atender</strong>
+      <span class="hint">${partes.join(' · ')}</span>
+    </div>
+    <div class="acciones">
+      <button class="btn btn-primary btn-sm" onclick="abrirAvisar()">Avisar por WhatsApp</button>
+      <button class="btn btn-ghost btn-sm" onclick="go('recordatorios')">Ver todos</button>
+      ${pedirPermiso?'<button class="btn btn-ghost btn-sm" onclick="pedirPermisoAvisos()">Activar avisos</button>':''}
+    </div>
+  </div>`;
+}
+
+/* Cada envio necesita su propio toque: si se abrieran todos los chats de
+   golpe, el navegador bloquearia las ventanas a partir de la primera. */
+function abrirAvisar(){
+  const {vencidos, semana}=remPendientes();
+  const lista=[...vencidos, ...semana];
+  const hoy=todayISO();
+  $('#avisarLista').innerHTML = lista.map(r=>{
+    const venc=r.fecha<hoy;
+    return `<div class="av-row" id="av-${r.id}">
+      <div>
+        <strong>${esc(r.cliente)}</strong>
+        <div class="hint">${fmtFecha(r.fecha)} · ${venc?'vencido':'esta semana'}${r.nota?' · '+esc(r.nota):''}</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        ${r.tel
+          ? `<button class="btn btn-sm" style="background:rgba(37,211,102,.18);color:#25d366;border:1px solid rgba(37,211,102,.5)" onclick="avisarUno('${r.id}')">WhatsApp</button>`
+          : '<span class="hint">Sin teléfono</span>'}
+        <button class="btn btn-ghost btn-sm" onclick="marcarDesdeAviso('${r.id}')">Hecho</button>
+      </div>
+    </div>`;
+  }).join('') || '<div class="hint">No hay nada pendiente.</div>';
+  $('#avisarModal').classList.add('show');
+}
+function cerrarAvisar(){ $('#avisarModal').classList.remove('show'); }
+function avisarUno(id){ waRemind(id); const el=$('#av-'+id); if(el) el.classList.add('listo'); }
+function marcarDesdeAviso(id){ toggleReminder(id); const el=$('#av-'+id); if(el) el.classList.add('listo'); }
+
+/* ---------- Notificacion del sistema ----------
+   Sin servidor no hay push: esto se dispara al abrir la app, no con la
+   app cerrada. Aun asi sirve si la traes instalada y la abres a diario. */
+function pedirPermisoAvisos(){
+  if(!('Notification' in window)){ toast('Este navegador no soporta avisos'); return; }
+  Notification.requestPermission().then(p=>{
+    renderAvisos();
+    if(p==='granted'){ toast('Avisos activados ✓'); notificarPendientes(true); }
+    else toast('No se activaron los avisos');
+  }).catch(()=>{});
+}
+function notificarPendientes(forzar){
+  if(!('Notification' in window) || Notification.permission!=='granted') return;
+  const {vencidos, semana}=remPendientes();
+  const total=vencidos.length+semana.length;
+  if(!total) return;
+  // una sola vez al dia, para no repetir el aviso cada vez que se abre
+  const hoy=todayISO();
+  if(!forzar && localStorage.getItem('mgcot_lastnotif')===hoy) return;
+  localStorage.setItem('mgcot_lastnotif', hoy);
+  const cuerpo=[vencidos.length?vencidos.length+' vencido'+(vencidos.length>1?'s':''):'',
+                semana.length?semana.length+' esta semana':''].filter(Boolean).join(' · ');
+  try{
+    new Notification(DB.settings.empresa||'MG Cotizador', {
+      body: total+' mantenimiento'+(total>1?'s':'')+' por atender — '+cuerpo,
+      icon:'icon-192.png', badge:'icon-192.png', tag:'mgcot-mant'
+    });
+  }catch(e){}
+}
+
 function renderPanelReminders(){
   const cont=$('#panel-reminders'); if(!cont) return;
   const hoy=todayISO();
@@ -2644,8 +2844,10 @@ loadSettings();
 populateClientes();
 resetForm();
 renderPanel();
+renderAvisos();
 renderBackupInfo();
 setTimeout(autoBackupCheck, 2500);
+setTimeout(notificarPendientes, 1500);
 
 // Bloqueo: si no hay clave, pedir crearla; si hay, pedirla (una vez por sesión)
 (function initLock(){
