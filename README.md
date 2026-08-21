@@ -1,6 +1,6 @@
-# MG Climas — Cotizador y Control de Ventas
+# G2 Climas — Cotizador y Control de Ventas
 
-Aplicación web (una sola página) para MG Climas: cotizador, historial de ventas,
+Aplicación web (una sola página) para G2 Climas: cotizador, historial de ventas,
 calculadora de capacidad, recordatorios de servicio y control de ingresos.
 
 - **Funciona sin internet** (PWA instalable con service worker).

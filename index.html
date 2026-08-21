@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>MG Climas — Cotizador y Control de Ventas</title>
+<title>G2 Climas — Cotizador y Control de Ventas</title>
 <meta name="theme-color" content="#04060a">
 <link rel="icon" type="image/svg+xml" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><rect width="24" height="24" rx="6" fill="%2316899c"/><g fill="none" stroke="%23ffffff" stroke-width="2.2" stroke-linecap="round"><path d="M4 9.5h11a2.5 2.5 0 1 0-2.5-2.5"/><path d="M4 14.5h13a2.5 2.5 0 1 1-2.5 2.5"/></g></svg>'>
 <!-- Instalable (PWA) -->
@@ -75,8 +75,11 @@ document.documentElement.dataset.theme=t;})();</script>
     -webkit-backdrop-filter:blur(28px) saturate(1.8);backdrop-filter:blur(28px) saturate(1.8);
     border:1px solid var(--vidrio-borde);border-radius:22px;padding:12px 18px;box-shadow:var(--shadow),var(--hl)}
   .logo{display:flex;align-items:center;gap:11px;font-family:var(--display);font-weight:800;font-size:1.3rem;letter-spacing:-.03em;color:var(--text)}
-  .logo .mark{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent2));
-    display:grid;place-items:center;color:#04141a;box-shadow:0 8px 22px -6px rgba(39,194,214,.7),var(--hl);flex-shrink:0}
+  /* Marca: ondas sueltas, sin caja. La caja redondeada es del icono de app. */
+  .logo .mark{width:42px;height:25px;display:grid;place-items:center;color:var(--accent);flex-shrink:0}
+  .logo .mark svg{width:42px;height:25px}
+  .logo .wm{color:var(--accent)}
+  .logo .wm b{color:var(--text);font-weight:inherit}
   .logo small{display:block;font-family:var(--body);font-weight:500;font-size:.72rem;color:var(--dim);letter-spacing:0}
   nav{display:flex;gap:6px;flex-wrap:wrap}
   nav button{background:transparent;border:1px solid transparent;color:var(--dim);padding:9px 15px;border-radius:999px;
@@ -463,8 +466,8 @@ document.documentElement.dataset.theme=t;})();</script>
   <div class="wrap">
     <div class="topbar">
       <div class="logo">
-        <div class="mark"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><path d="M4 9.5h11a2.5 2.5 0 1 0-2.5-2.5"/><path d="M4 14.5h13a2.5 2.5 0 1 1-2.5 2.5"/></svg></div>
-        <div>MG Climas<small>Cotizador y control de ventas</small></div>
+        <div class="mark"><svg viewBox="0 0 34 20" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M2 8Q17-.4 32 8"/><path d="M4 13.5Q17 6.3 30 13.5" opacity=".6"/><path d="M6 19Q17 12.8 28 19" opacity=".36"/></svg></div>
+        <div><span class="wm"><b>G2</b>Climas</span><small>Cotizador y control de ventas</small></div>
       </div>
       <nav id="nav">
         <button data-view="panel" class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>Panel</button>
@@ -1028,7 +1031,7 @@ document.documentElement.dataset.theme=t;})();</script>
 
 <script>
 /* ============================================================
-   MG CLIMAS — Cotizador. Todo se guarda en el navegador (localStorage).
+   G2 CLIMAS — Cotizador. Todo se guarda en el navegador (localStorage).
    ============================================================ */
 const $ = s => document.querySelector(s);
 const money = n => new Intl.NumberFormat('es-MX',{style:'currency',currency:'MXN'}).format(n||0);
@@ -1092,7 +1095,7 @@ const DEFAULT_MATERIALES = [
 ];
 
 const DEFAULT_SETTINGS = {
-  empresa:"MG Climas", tel:"614 513 7488", correo:"", ciudad:"Torreón · Gómez Palacio · Lerdo",
+  empresa:"G2 Climas", tel:"614 513 7488", correo:"", ciudad:"Torreón · Gómez Palacio · Lerdo",
   pie:"Gracias por su preferencia. Garantía de 1 año en instalación. Precios en pesos mexicanos.", folio:1,
   mantMeses:6, autoMant:true
 };
@@ -1117,6 +1120,14 @@ let barYear = new Date().getFullYear();
   DB.materiales.forEach(m=>{ if(!m.u){ m.u='m'; changed=true; } });
   DEFAULT_MATERIALES.forEach(d=>{ if(!DB.materiales.some(m=>m.n===d.n)){ DB.materiales.push({...d}); changed=true; } });
   if(changed) save();
+})();
+
+/* Migracion de marca: quien ya usaba la app trae "MG Climas" guardado en
+   el navegador, y cambiar el valor por defecto no toca lo ya guardado.
+   Solo se renombra si sigue tal cual: si el usuario puso otro nombre, se
+   respeta. */
+(function migrateMarca(){
+  if(DB.settings.empresa === 'MG Climas'){ DB.settings.empresa = 'G2 Climas'; save(); }
 })();
 
 function load(k,def){ try{const v=localStorage.getItem(k);return v?JSON.parse(v):def;}catch(e){return def;} }
@@ -1500,7 +1511,7 @@ function saveSettings(){
 function exportData(msg){
   const blob=new Blob([JSON.stringify(DB,null,2)],{type:'application/json'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
-  a.download='mg-climas-respaldo-'+todayISO()+'.json'; a.click();
+  a.download='g2climas-respaldo-'+todayISO()+'.json'; a.click();
   localStorage.setItem('mgcot_lastbackup', String(Date.now()));
   renderBackupInfo();
   toast(msg||'Respaldo descargado ✓');
@@ -1544,9 +1555,9 @@ function wipeAll(){ if(confirm('¿Borrar TODAS las cotizaciones e historial? Est
 /* ---------- Compartir datos entre dispositivos (combina, no borra) ---------- */
 async function shareData(){
   const blob=new Blob([JSON.stringify(DB,null,2)],{type:'application/json'});
-  const file=new File([blob],'mg-climas-datos-'+todayISO()+'.json',{type:'application/json'});
+  const file=new File([blob],'g2climas-datos-'+todayISO()+'.json',{type:'application/json'});
   if(navigator.canShare && navigator.canShare({files:[file]})){
-    try{ await navigator.share({files:[file], title:'Datos MG Climas', text:'Datos de MG Climas para combinar en el otro dispositivo.'}); return; }
+    try{ await navigator.share({files:[file], title:'Datos G2 Climas', text:'Datos de G2 Climas para combinar en el otro dispositivo.'}); return; }
     catch(e){ if(e && e.name==='AbortError') return; }
   }
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=file.name; document.body.appendChild(a); a.click(); a.remove();
@@ -2602,7 +2613,7 @@ function exportClientesCSV(){
     c.nombre, c.tel||'', c.correo||'', c.dir||'', c.quotes.length, c.cerradas,
     num2(c.total), num2(c.cobrado), num2(c.saldo), c.ultima||''
   ]));
-  downloadCSV('mg-climas-clientes-'+todayISO()+'.csv', filas);
+  downloadCSV('g2climas-clientes-'+todayISO()+'.csv', filas);
 }
 
 /* ============================================================
