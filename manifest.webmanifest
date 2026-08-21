@@ -1,7 +1,7 @@
 {
-  "name": "MG Climas — Cotizador y Control de Ventas",
+  "name": "G2 Climas — Cotizador y Control de Ventas",
   "short_name": "MG Cotizador",
-  "description": "Cotizador, historial de ventas, calculadora de capacidad y recordatorios para MG Climas. Funciona sin internet.",
+  "description": "Cotizador, historial de ventas, calculadora de capacidad y recordatorios para G2 Climas. Funciona sin internet.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
